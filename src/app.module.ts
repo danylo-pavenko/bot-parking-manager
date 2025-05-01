@@ -24,7 +24,7 @@ dotenv.config();
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
-        synchronize: true,
+        synchronize: process.env.NODE_ENV !== 'production',
         entities: [User, Address, ParkingSpot, RentRequest, GuardAccess, WithdrawRequest, TelegramAdmin],
       }
     ),

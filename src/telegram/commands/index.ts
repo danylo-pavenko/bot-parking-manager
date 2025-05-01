@@ -17,6 +17,7 @@ import { setupWithdrawCommand } from './withdraw.command';
 import { setupAdminStatsCommand } from './admin-stats.command';
 import { setupAdminWithdrawsCommand } from './admin-withdraws.command';
 import { setupAdminGrantCommand } from './admin-grant.command';
+import { setupMeCommand } from './me.command';
 
 export function registerCommands(
     bot: BotContext,
@@ -40,4 +41,5 @@ export function registerCommands(
     setupAdminStatsCommand(bot, services);
     setupAdminWithdrawsCommand(bot, services.userService);
     setupAdminGrantCommand(bot, services.userService);
+    setupMeCommand(bot, services);
 }

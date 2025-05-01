@@ -111,4 +111,11 @@ export class AddressService {
     async countSpots(): Promise<number> {
         return this.spotRepo.count();
     }
+
+    async findAllSpotsByOwner(ownerId: number) {
+        return this.spotRepo.find({
+            where: { owner: { id: ownerId } },
+            relations: ['address'],
+        });
+    }
 }

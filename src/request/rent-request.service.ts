@@ -86,4 +86,11 @@ export class RentRequestService {
             relations: ['renter', 'spot', 'spot.address'],
         });
     }
+
+    async findApprovedByRenter(renterId: number) {
+        return this.repo.find({
+            where: { renter: { id: renterId }, status: 'APPROVED' },
+            relations: ['spot', 'spot.address'],
+        });
+    }
 }

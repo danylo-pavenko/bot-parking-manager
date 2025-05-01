@@ -47,6 +47,11 @@ export const messages: Record<Lang, Record<string, string>> = {
         WITHDRAW_CANCELED: '❌ Вивід скасовано.',
         NO_FUNDS_AVAILABLE: '❌ Недостатньо коштів для виводу.',
         WITHDRAW_FAILED: '❌ Помилка при створенні заявки на вивід.',
+        YOUR_ROLE: 'Ваша роль',
+        OWNER_YOUR_SPOTS: 'Ваші паркомісця',
+        OWNER_NO_SPOTS: 'У вас немає доданих паркомісць.',
+        RENTER_CURRENT_RENT: 'Ваші активні оренди',
+        RENTER_NO_RENT: 'У вас немає підтверджених оренд.',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -94,6 +99,11 @@ export const messages: Record<Lang, Record<string, string>> = {
         WITHDRAW_CANCELED: '❌ Withdrawal cancelled.',
         NO_FUNDS_AVAILABLE: '❌ Not enough funds to withdraw.',
         WITHDRAW_FAILED: '❌ Failed to create withdrawal request.',
+        YOUR_ROLE: 'Your role',
+        OWNER_YOUR_SPOTS: 'Your parking spots',
+        OWNER_NO_SPOTS: 'You have no parking spots.',
+        RENTER_CURRENT_RENT: 'Your current rentals',
+        RENTER_NO_RENT: 'You have no confirmed rentals.',
     },
 };
 
