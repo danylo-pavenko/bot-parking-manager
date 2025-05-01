@@ -28,6 +28,7 @@ dotenv.config();
         entities: [User, Address, ParkingSpot, RentRequest, GuardAccess, WithdrawRequest, TelegramAdmin],
       }
     ),
+    TelegramModule,
   ],
   providers: [ConfigService],
   exports: [ConfigService],
