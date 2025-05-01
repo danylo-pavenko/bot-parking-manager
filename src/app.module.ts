@@ -9,6 +9,7 @@ import { RentRequest } from './entities/rent-request.entity';
 import { GuardAccess } from './entities/guard-access.entity';
 import { WithdrawRequest } from './entities/withdraw-request.entity';
 import { TelegramAdmin } from './entities/telegram-admin.entity';
+import { RentRequestService } from './request/rent-request.service';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

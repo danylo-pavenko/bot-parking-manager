@@ -6,9 +6,9 @@ export class Address {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column({ unique: true })
     name: string;
 
-    @OneToMany(() => ParkingSpot, (spot) => spot.address)
+    @OneToMany(() => ParkingSpot, (spot) => spot.address, { cascade: true })
     spots: ParkingSpot[];
 }

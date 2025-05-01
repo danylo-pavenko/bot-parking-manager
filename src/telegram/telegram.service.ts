@@ -7,6 +7,7 @@ import { SessionData } from './session';
 import { t } from './bot_messages';
 import { UserRole } from 'src/entities/user.entity';
 import { AddressService } from 'src/address/address.service';
+import { RentRequestService } from 'src/request/rent-request.service';
 
 @Injectable()
 export class TelegramService implements OnModuleDestroy {
@@ -16,6 +17,7 @@ export class TelegramService implements OnModuleDestroy {
         private config: ConfigService,
         private userService: UserService,
         private addressService: AddressService,
+        private rentRequestService: RentRequestService,
     ) {
         this.bot = new Bot<Context & HydrateFlavor<Context> & { session: SessionData }>(this.config.botToken);
         this.bot.use(session({
@@ -25,6 +27,7 @@ export class TelegramService implements OnModuleDestroy {
                     spotNumber: undefined,
                     price: undefined,
                     guardId: undefined,
+                    spotId: undefined,
                 }
             })
         }));
@@ -38,14 +41,9 @@ export class TelegramService implements OnModuleDestroy {
         this.handleAddAddressCommand();
         this.handleAddParkingCommand();
         this.handleJoinAddressCommand();
-
-        this.bot.command('set_guard', async (ctx) => {
-            await ctx.reply('Призначення охоронця ще не реалізовано');
-        });
-
-        this.bot.command('search', async (ctx) => {
-            await ctx.reply('Пошук ще не реалізовано');
-        });
+        this.handleSetGuardCommand();
+        this.handleSearchCommand();
+        this.handleRendCommand();
 
         this.bot.command('rent', async (ctx) => {
             await ctx.reply('Оренда ще не реалізована');
@@ -320,6 +318,69 @@ export class TelegramService implements OnModuleDestroy {
         });
     }
 
+    private handleSearchCommand() {
+        this.bot.command('search', async (ctx) => {
+            if (!ctx.from) return;
+
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            if (user?.role !== 'RENTER') {
+                return ctx.reply(t(lang, 'ONLY_RENTER'));
+            }
+
+            ctx.session.step = 'search_input';
+            await ctx.reply(t(lang, 'SEARCH_ENTER_STREET'));
+        });
+    }
+
+    private handleRendCommand() {
+        this.bot.command('rent', async (ctx) => {
+            if (!ctx.from) return;
+
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            if (user?.role !== 'RENTER') {
+                return ctx.reply(t(lang, 'ONLY_RENTER'));
+            }
+
+            // TODO: вибір доступного паркомісця
+            const spots = await this.addressService.findAvailableSpots();
+            if (!spots.length) {
+                return ctx.reply(t(lang, 'NO_SPOTS_AVAILABLE'));
+            }
+
+            ctx.session.step = 'rent_select_spot';
+            ctx.session.temp = {};
+
+            await ctx.reply(t(lang, 'RENT_SELECT_SPOT'), {
+                reply_markup: {
+                    inline_keyboard: spots.map((s) => [
+                        {
+                            text: `${s.address.name} — ${s.spotNumber}, ${s.price} ${s.currency}`,
+                            callback_data: `rent_spot_${s.id}`,
+                        },
+                    ]),
+                },
+            });
+        });
+
+        this.bot.callbackQuery(/^rent_spot_(\d+)$/, async (ctx) => {
+            const spotId = Number(ctx.match[1]);
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            ctx.session.temp.spotId = spotId;
+            ctx.session.step = 'rent_input_fio';
+            await ctx.answerCallbackQuery();
+            await ctx.reply(t(lang, 'RENT_ENTER_FIO'));
+        });
+    }
+
     private handleTextInput() {
         this.bot.on('message:text', async (ctx) => {
             const telegramId = String(ctx.from.id);
@@ -386,6 +447,49 @@ export class TelegramService implements OnModuleDestroy {
                         },
                     });
                 }
+                case 'search_input': {
+                    const query = ctx.message.text.trim();
+                    const spots = await this.addressService.searchAvailableSpotsByStreet(query);
+                    ctx.session.step = undefined;
+
+                    if (!spots.length) {
+                        return ctx.reply(t(lang, 'SEARCH_NOT_FOUND'));
+                    }
+
+                    const messages = spots.map((s, i) =>
+                        `${i + 1}. ${s.address.name} — ${s.carPlate}, ${s.price} ${s.currency}`,
+                    );
+
+                    return ctx.reply(messages.join('\n'));
+                }
+                case 'rent_input_fio': {
+                    ctx.session.temp.fullName = ctx.message.text.trim();
+                    ctx.session.step = 'rent_input_phone';
+                    return ctx.reply(t(lang, 'RENT_ENTER_PHONE'));
+                }
+
+                case 'rent_input_phone': {
+                    ctx.session.temp.phone = ctx.message.text.trim();
+                    ctx.session.step = 'rent_input_ipn';
+                    return ctx.reply(t(lang, 'RENT_ENTER_TIN'));
+                }
+
+                case 'rent_input_ipn': {
+                    ctx.session.temp.ipn = ctx.message.text.trim();
+                    ctx.session.step = 'rent_input_payment_method';
+
+                    return ctx.reply(t(lang, 'RENT_ENTER_PAYMENT'), {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: t(lang, 'PAYMENT_METHOD_CASH'), callback_data: 'payment_CASH' },
+                                    { text: t(lang, 'PAYMENT_METHOD_CARD'), callback_data: 'payment_CARD' },
+                                ],
+                            ],
+                        },
+                    });
+                }
+
                 default:
                     await ctx.reply(t(lang, 'MISSUNDERSTANDING_COMMAND'));
                     return;

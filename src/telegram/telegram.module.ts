@@ -3,12 +3,14 @@ import { TelegramService } from './telegram.service';
 import { ConfigService } from 'src/config/config.service';
 import { AddressService } from 'src/address/address.service';
 import { UserService } from 'src/user/user.service';
+import { RentRequestService } from 'src/request/rent-request.service';
 
 @Module({
   imports: [
     ConfigService,
     UserService,
     AddressService,
+    RentRequestService,
   ],
   providers: [TelegramService],
   exports: [TelegramService],
