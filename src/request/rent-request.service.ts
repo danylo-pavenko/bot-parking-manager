@@ -55,4 +55,35 @@ export class RentRequestService {
     async reject(requestId: number): Promise<void> {
         await this.repo.update(requestId, { status: 'REJECTED' });
     }
+
+    async findPendingByOwner(ownerId: number): Promise<RentRequest[]> {
+        return this.repo
+            .createQueryBuilder('request')
+            .leftJoinAndSelect('request.spot', 'spot')
+            .leftJoinAndSelect('spot.address', 'address')
+            .leftJoinAndSelect('request.renter', 'renter')
+            .where('spot.ownerId = :ownerId', { ownerId })
+            .andWhere('request.status = :status', { status: 'PENDING' })
+            .getMany();
+    }
+
+    async markConfirmed(requestId: number): Promise<void> {
+        await this.repo.update(requestId, {
+            confirmedAt: new Date(),
+        });
+    }
+
+    async countAll(): Promise<number> {
+        return this.repo.count();
+    }
+
+    async findCompletedCash(): Promise<RentRequest[]> {
+        return this.repo.find({
+            where: {
+                status: 'COMPLETED',
+                paymentMethod: 'CASH',
+            },
+            relations: ['renter', 'spot', 'spot.address'],
+        });
+    }
 }

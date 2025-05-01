@@ -3,7 +3,9 @@ import {
     PrimaryGeneratedColumn,
     Column,
     CreateDateColumn,
+    OneToMany,
 } from 'typeorm';
+import { WithdrawRequest } from './withdraw-request.entity';
 
 export enum UserRole {
     ADMIN = 'ADMIN',
@@ -24,6 +26,9 @@ export class User {
     username?: string;
 
     @Column({ nullable: true })
+    fullName?: string;
+
+    @Column({ nullable: true })
     phone?: string;
 
     @Column({ type: 'enum', enum: UserRole, nullable: true })
@@ -31,6 +36,12 @@ export class User {
 
     @Column({ default: 'uk' })
     language: 'uk' | 'en';
+
+    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+    balanceUah: number;
+
+    @OneToMany(() => WithdrawRequest, (r) => r.user)
+    withdrawRequests: WithdrawRequest[];
 
     @CreateDateColumn()
     createdAt: Date;

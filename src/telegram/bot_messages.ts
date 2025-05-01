@@ -39,6 +39,14 @@ export const messages: Record<Lang, Record<string, string>> = {
         RENT_ENTER_PHONE: 'Введіть номер телефону:',
         RENT_ENTER_TIN: 'Введіть ваш ІПН:',
         RENT_REQUEST_SUBMITTED: '✅ Запит на оренду надіслано власнику.',
+        NO_PENDING_REQUESTS: '❌ Немає заявок на підтвердження.',
+        SELECT_REQUEST_TO_CONFIRM: 'Оберіть заявку для підтвердження готівкової оплати:',
+        RENT_CONFIRMED: '✅ Оренду підтверджено.',
+        WITHDRAW_CONFIRM: '💸 Ви впевнені, що хочете вивести {{amount}} грн?',
+        WITHDRAW_SUCCESS: '✅ Заявку на вивід створено. Очікуйте підтвердження.',
+        WITHDRAW_CANCELED: '❌ Вивід скасовано.',
+        NO_FUNDS_AVAILABLE: '❌ Недостатньо коштів для виводу.',
+        WITHDRAW_FAILED: '❌ Помилка при створенні заявки на вивід.',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -78,9 +86,23 @@ export const messages: Record<Lang, Record<string, string>> = {
         RENT_ENTER_PHONE: 'Enter your phone number:',
         RENT_ENTER_TIN: 'Enter your tax ID number:',
         RENT_REQUEST_SUBMITTED: '✅ Your rent request has been submitted to the owner.',
+        NO_PENDING_REQUESTS: '❌ No pending requests found.',
+        SELECT_REQUEST_TO_CONFIRM: 'Select a request to confirm cash payment:',
+        RENT_CONFIRMED: '✅ Rent confirmed.',
+        WITHDRAW_CONFIRM: '💸 Are you sure you want to withdraw {{amount}} UAH?',
+        WITHDRAW_SUCCESS: '✅ Withdrawal request created. Awaiting approval.',
+        WITHDRAW_CANCELED: '❌ Withdrawal cancelled.',
+        NO_FUNDS_AVAILABLE: '❌ Not enough funds to withdraw.',
+        WITHDRAW_FAILED: '❌ Failed to create withdrawal request.',
     },
 };
 
-export function t(lang: Lang, key: string): string {
-    return messages[lang][key] || key;
+export function t(lang: Lang, key: string, params?: Record<string, any>): string {
+    let message = messages[lang]?.[key] || key;
+    if (params) {
+        for (const [k, v] of Object.entries(params)) {
+            message = message.replace(`{{${k}}}`, String(v));
+        }
+    }
+    return message;
 }

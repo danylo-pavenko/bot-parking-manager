@@ -10,5 +10,6 @@ export interface SessionData {
     phone?: string;
     ipn?: string;
     paymentMethod?: 'CASH' | 'CARD';
+    amount?: number;
   };
 }

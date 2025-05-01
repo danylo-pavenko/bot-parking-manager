@@ -89,4 +89,26 @@ export class AddressService {
             take: 10,
         });
     }
+
+    async findSpotsByCarPlateAndGuard(guardId: number, plate: string): Promise<ParkingSpot[]> {
+        return this.spotRepo
+            .createQueryBuilder('spot')
+            .leftJoinAndSelect('spot.address', 'address')
+            .leftJoinAndSelect('spot.renter', 'renter')
+            .innerJoin('guard_access', 'ga', 'ga.addressId = address.id AND ga.guardId = :guardId', { guardId })
+            .where('UPPER(spot.carPlate) = :plate', { plate: plate.toUpperCase() })
+            .getMany();
+    }
+
+    async findAllByOwner(ownerId: number): Promise<Address[]> {
+        return this.addressRepo
+            .createQueryBuilder('address')
+            .innerJoin('address.spots', 'spot')
+            .where('spot.ownerId = :ownerId', { ownerId })
+            .getMany();
+    }
+
+    async countSpots(): Promise<number> {
+        return this.spotRepo.count();
+    }
 }
