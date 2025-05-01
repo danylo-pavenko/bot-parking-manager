@@ -25,6 +25,11 @@ export const messages: Record<Lang, Record<string, string>> = {
         SOMETHING_WENT_WRONG: '❌ Щось пішло не так. Спробуйте ще раз.',
         SELECT_ADDRESS_JOIN: 'Оберіть адресу, до якої хочете приєднатись:',
         ADDRESS_JOINED: '✅ Ви приєдналися до обраної адреси. Тепер можете додати паркомісця.',
+        ENTER_GUARD_USERNAME: 'Введіть username охоронця:',
+        GUARD_NOT_FOUND: '❌ Користувача не знайдено.',
+        SELECT_ADDRESS_GUARD: 'Оберіть адресу, за яку відповідатиме охоронець:',
+        GUARD_ASSIGNED: '✅ Охоронця призначено.',
+        MISSUNDERSTANDING_COMMAND: '🤖 Я не зрозумів. Виберіть команду з меню.',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -50,6 +55,11 @@ export const messages: Record<Lang, Record<string, string>> = {
         SOMETHING_WENT_WRONG: '❌ Something went wrong. Please try again.',
         SELECT_ADDRESS_JOIN: 'Select the address you want to join:',
         ADDRESS_JOINED: '✅ You joined the address. You can now add parking spots.',
+        ENTER_GUARD_USERNAME: 'Enter the guard’s Telegram username:',
+        GUARD_NOT_FOUND: '❌ User not found.',
+        SELECT_ADDRESS_GUARD: 'Select the address this guard will cover:',
+        GUARD_ASSIGNED: '✅ Guard has been assigned.',
+        MISSUNDERSTANDING_COMMAND: '🤖 I\'m not understanding. Choose command via menu.',
     },
 };
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Address } from 'src/entities/address.entity';
+import { GuardAccess } from 'src/entities/guard-access.entity';
 import { ParkingSpot } from 'src/entities/parking-spot.entity';
 import { ILike, Repository } from 'typeorm';
 
@@ -12,6 +13,9 @@ export class AddressService {
 
         @InjectRepository(ParkingSpot)
         private readonly spotRepo: Repository<ParkingSpot>,
+        
+        @InjectRepository(GuardAccess)
+        private readonly guardAccessRepo: Repository<GuardAccess>,
     ) { }
 
     async findByName(name: string): Promise<Address | null> {
@@ -56,5 +60,12 @@ export class AddressService {
             address: { id: input.addressId },
         });
         return this.spotRepo.save(spot);
+    }
+
+    async assignGuard(addressId: number, guardId: number): Promise<void> {
+        await this.guardAccessRepo.save({
+            address: { id: addressId },
+            guard: { id: guardId },
+        });
     }
 }

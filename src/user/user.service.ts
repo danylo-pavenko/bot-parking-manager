@@ -26,4 +26,10 @@ export class UserService {
     async updateRole(telegramId: string, role: UserRole): Promise<void> {
         await this.userRepository.update({ telegramId }, { role });
     }
+
+    async findByUsername(username: string): Promise<User | null> {
+        return this.userRepository.findOne({
+            where: { username },
+        });
+    }
 }

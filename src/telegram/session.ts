@@ -4,5 +4,6 @@ export interface SessionData {
       addressId?: number;
       spotNumber?: string;
       price?: number;
+      guardId?: number;
     };
 }

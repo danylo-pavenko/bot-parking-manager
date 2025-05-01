@@ -23,7 +23,8 @@ export class TelegramService implements OnModuleDestroy {
                 temp: {
                     addressId: undefined,
                     spotNumber: undefined,
-                    price: undefined
+                    price: undefined,
+                    guardId: undefined,
                 }
             })
         }));
@@ -275,6 +276,50 @@ export class TelegramService implements OnModuleDestroy {
         });
     }
 
+    private handleSetGuardCommand() {
+        this.bot.command('set_guard', async (ctx) => {
+            if (!ctx.from) return;
+
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            if (user?.role !== 'OWNER') {
+                return ctx.reply(t(lang, 'ONLY_OWNER'));
+            }
+
+            const addresses = await this.addressService.findAll();
+            if (addresses.length === 0) {
+                return ctx.reply(t(lang, 'NO_ADDRESSES_FOUND'));
+            }
+
+            ctx.session.step = 'set_guard_wait_username';
+            ctx.session.temp = {};
+
+            await ctx.reply(t(lang, 'ENTER_GUARD_USERNAME'));
+        });
+
+        this.bot.callbackQuery(/^guard_address_(\d+)$/, async (ctx) => {
+            const addressId = Number(ctx.match[1]);
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            const guardId = ctx.session.temp.guardId;
+            if (!guardId) {
+                ctx.session.step = undefined;
+                return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
+            }
+
+            await this.addressService.assignGuard(addressId, guardId);
+
+            ctx.session.step = undefined;
+            ctx.session.temp = {};
+            await ctx.answerCallbackQuery();
+            await ctx.reply(t(lang, 'GUARD_ASSIGNED'));
+        });
+    }
+
     private handleTextInput() {
         this.bot.on('message:text', async (ctx) => {
             const telegramId = String(ctx.from.id);
@@ -320,8 +365,29 @@ export class TelegramService implements OnModuleDestroy {
                         },
                     });
                 }
+                case 'set_guard_wait_username': {
+                    const username = ctx.message.text.trim().replace('@', '');
+                    const guard = await this.userService.findByUsername(username);
+
+                    if (!guard) {
+                        ctx.session.step = undefined;
+                        return ctx.reply(t(lang, 'GUARD_NOT_FOUND'));
+                    }
+
+                    ctx.session.temp.guardId = guard.id;
+                    ctx.session.step = 'set_guard_wait_address';
+
+                    const addresses = await this.addressService.findAll();
+                    return ctx.reply(t(lang, 'SELECT_ADDRESS_GUARD'), {
+                        reply_markup: {
+                            inline_keyboard: addresses.map((a) => [
+                                { text: a.name, callback_data: `guard_address_${a.id}` },
+                            ]),
+                        },
+                    });
+                }
                 default:
-                    await ctx.reply('🤖 Я не зрозумів. Виберіть команду з меню.');
+                    await ctx.reply(t(lang, 'MISSUNDERSTANDING_COMMAND'));
                     return;
             }
         });
