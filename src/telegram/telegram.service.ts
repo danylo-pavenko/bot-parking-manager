@@ -18,7 +18,15 @@ export class TelegramService implements OnModuleDestroy {
         private addressService: AddressService,
     ) {
         this.bot = new Bot<Context & HydrateFlavor<Context> & { session: SessionData }>(this.config.botToken);
-        this.bot.use(session({ initial: (): SessionData => ({}) }));
+        this.bot.use(session({
+            initial: (): SessionData => ({
+                temp: {
+                    addressId: undefined,
+                    spotNumber: undefined,
+                    price: undefined
+                }
+            })
+        }));
         this.bot.use(hydrate());
         this.setup();
     }
@@ -27,14 +35,8 @@ export class TelegramService implements OnModuleDestroy {
         this.handleStartCommand();
         this.handleLanguageCommand();
         this.handleAddAddressCommand();
-
-        this.bot.command('add_parking', async (ctx) => {
-            await ctx.reply('Додавання паркомісця ще не реалізовано');
-        });
-
-        this.bot.command('join_address', async (ctx) => {
-            await ctx.reply('Приєднання до адреси ще не реалізовано');
-        });
+        this.handleAddParkingCommand();
+        this.handleJoinAddressCommand();
 
         this.bot.command('set_guard', async (ctx) => {
             await ctx.reply('Призначення охоронця ще не реалізовано');
@@ -186,6 +188,93 @@ export class TelegramService implements OnModuleDestroy {
         });
     }
 
+    private handleAddParkingCommand() {
+        this.bot.command('add_parking', async (ctx) => {
+            if (!ctx.from) return;
+
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            if (user?.role !== 'OWNER') {
+                return ctx.reply(t(lang, 'ONLY_OWNER'));
+            }
+
+            const addresses = await this.addressService.findAll();
+            if (addresses.length === 0) {
+                return ctx.reply(t(lang, 'NO_ADDRESSES_FOUND'));
+            }
+
+            ctx.session.step = 'add_parking_choose_address';
+            ctx.session.temp = {};
+
+            await ctx.reply(t(lang, 'SELECT_ADDRESS'), {
+                reply_markup: {
+                    inline_keyboard: addresses.map((a) => [
+                        { text: a.name, callback_data: `parking_address_${a.id}` },
+                    ]),
+                },
+            });
+        });
+
+        this.bot.callbackQuery(/^parking_address_(\d+)$/, async (ctx) => {
+            const addressId = Number(ctx.match[1]);
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            ctx.session.temp = { addressId };
+            ctx.session.step = 'add_parking_number';
+
+            await ctx.answerCallbackQuery();
+            await ctx.reply(t(lang, 'ENTER_SPOT_NUMBER'));
+        });
+    }
+
+    private handleJoinAddressCommand() {
+        this.bot.command('join_address', async (ctx) => {
+            if (!ctx.from) return;
+
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            if (user?.role !== 'OWNER') {
+                return ctx.reply(t(lang, 'ONLY_OWNER'));
+            }
+
+            const addresses = await this.addressService.findAll();
+            if (addresses.length === 0) {
+                return ctx.reply(t(lang, 'NO_ADDRESSES_FOUND'));
+            }
+
+            ctx.session.step = 'joined_address_selection';
+            ctx.session.temp = {};
+
+            await ctx.reply(t(lang, 'SELECT_ADDRESS_JOIN'), {
+                reply_markup: {
+                    inline_keyboard: addresses.map((a) => [
+                        { text: a.name, callback_data: `join_address_${a.id}` },
+                    ]),
+                },
+            });
+        });
+
+        this.bot.callbackQuery(/^join_address_(\d+)$/, async (ctx) => {
+            const addressId = Number(ctx.match[1]);
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            ctx.session.step = undefined;
+            ctx.session.temp = {};
+
+            await ctx.answerCallbackQuery();
+            await ctx.reply(t(lang, 'ADDRESS_JOINED')); // фактично, це просто вибір адреси
+            // користувач тепер зможе додати місця через add_parking, вже маючи існуючу адресу
+        });
+    }
+
     private handleTextInput() {
         this.bot.on('message:text', async (ctx) => {
             const telegramId = String(ctx.from.id);
@@ -206,11 +295,67 @@ export class TelegramService implements OnModuleDestroy {
                     await this.addressService.create(addressName);
                     return ctx.reply(t(lang, 'ADDRESS_ADDED'));
                 }
-
+                case 'add_parking_number': {
+                    const number = ctx.message.text.trim();
+                    ctx.session.temp.spotNumber = number;
+                    ctx.session.step = 'add_parking_price';
+                    return ctx.reply(t(lang, 'ENTER_PRICE'));
+                }
+                case 'add_parking_price': {
+                    const price = parseFloat(ctx.message.text.trim());
+                    if (isNaN(price)) {
+                        return ctx.reply(t(lang, 'INVALID_PRICE'));
+                    }
+                    ctx.session.temp.price = price;
+                    ctx.session.step = 'add_parking_currency';
+                    return ctx.reply(t(lang, 'SELECT_CURRENCY'), {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: '₴ UAH', callback_data: 'currency_UAH' },
+                                    { text: '€ EUR', callback_data: 'currency_EUR' },
+                                    { text: '$ USD', callback_data: 'currency_USD' },
+                                ],
+                            ],
+                        },
+                    });
+                }
                 default:
                     await ctx.reply('🤖 Я не зрозумів. Виберіть команду з меню.');
                     return;
             }
+        });
+
+        this.bot.callbackQuery(/^currency_(UAH|USD|EUR)$/, async (ctx) => {
+            const currency = ctx.match[1] as 'UAH' | 'USD' | 'EUR';
+            const telegramId = String(ctx.from.id);
+            const user = await this.userService.findByTelegramId(telegramId);
+            const lang = user?.language || 'uk';
+
+            const { addressId, spotNumber, price } = ctx.session.temp;
+            if (!addressId || !spotNumber || !price) {
+                ctx.session.step = undefined;
+                return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
+            }
+
+            const exists = await this.addressService.spotExists(addressId, spotNumber);
+            if (exists) {
+                ctx.session.step = undefined;
+                return ctx.reply(t(lang, 'SPOT_ALREADY_EXISTS'));
+            }
+
+            await this.addressService.createSpot({
+                addressId,
+                ownerId: user!.id,
+                spotNumber,
+                price,
+                currency,
+            });
+
+            ctx.session.step = undefined;
+            ctx.session.temp = {};
+            await ctx.answerCallbackQuery();
+            await ctx.reply(t(lang, 'SPOT_ADDED'));
         });
     }
 

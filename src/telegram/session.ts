@@ -1,4 +1,8 @@
 export interface SessionData {
     step?: string;
-    temp?: Record<string, any>;
+    temp: {
+      addressId?: number;
+      spotNumber?: string;
+      price?: number;
+    };
 }
