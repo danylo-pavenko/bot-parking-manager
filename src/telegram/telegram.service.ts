@@ -14,7 +14,7 @@ import { t } from './bot_messages';
 
 @Injectable()
 export class TelegramService implements OnModuleDestroy {
-    
+
     public readonly bot: Bot<Context & HydrateFlavor<Context> & { session: SessionData }>;
 
     constructor(
@@ -56,7 +56,28 @@ export class TelegramService implements OnModuleDestroy {
             spot: `${request.spot.address.name} — ${request.spot.spotNumber}`,
             renter: request.renter.fullName,
         });
-    
+
         await this.bot.api.sendMessage(Number(owner.telegramId), message);
+    }
+
+
+    async sendReminder(telegramId: string, addressName: string, spotNumber: string, endDate: Date): Promise<void> {
+        const user = await this.userService.findByTelegramId(telegramId);
+        const lang = user?.language || 'uk';
+
+        const msg = t(lang, 'RENT_ENDING_REMINDER')
+            .replace('%s', addressName)
+            .replace('%s', spotNumber)
+            .replace('%s', endDate.toLocaleDateString('uk-UA'));
+
+        await this.bot.api.sendMessage(telegramId, msg);
+    }
+
+    async notifyUser(telegramId: string, message: string): Promise<void> {
+        try {
+            await this.bot.api.sendMessage(telegramId, message);
+        } catch (error) {
+            console.error(`❌ Failed to send message to user ${telegramId}:`, error.message);
+        }
     }
 }

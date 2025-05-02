@@ -11,6 +11,8 @@ import { WithdrawRequest } from './entities/withdraw-request.entity';
 import { TelegramAdmin } from './entities/telegram-admin.entity';
 import * as dotenv from 'dotenv';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ReminderService } from './reminder/reminder.service';
+import { RentRequestModule } from './request/rent-request.module';
 
 dotenv.config();
 
@@ -30,8 +32,9 @@ dotenv.config();
     ),
     TelegramModule,
     ScheduleModule.forRoot(),
+    RentRequestModule,
   ],
-  providers: [ConfigService],
+  providers: [ConfigService, ReminderService],
   exports: [ConfigService],
 })
 export class AppModule { }

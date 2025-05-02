@@ -20,6 +20,8 @@ import { setupAdminGrantCommand } from './admin-grant.command';
 import { setupMeCommand } from './me.command';
 import { TelegramService } from '../telegram.service';
 import { setupMySpotsCommand } from './my-spots.command';
+import { setupCancelRentRequestsCommand } from './cancel-rent-requests.command';
+import { setupMyRentalsCommand } from './my-rentals.command';
 
 export function registerCommands(
     telegramService: TelegramService,
@@ -45,5 +47,7 @@ export function registerCommands(
     setupAdminWithdrawsCommand(bot, services.userService);
     setupAdminGrantCommand(bot, services.userService);
     setupMeCommand(bot, services);
-    setupMySpotsCommand(bot, services.userService, services.addressService);
+    setupMySpotsCommand(telegramService, services.userService, services.addressService);
+    setupCancelRentRequestsCommand(bot, services.userService, services.rentRequestService);
+    setupMyRentalsCommand(bot, services.userService, services.rentRequestService);
 }

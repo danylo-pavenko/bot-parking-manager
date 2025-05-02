@@ -2,12 +2,14 @@ import { BotContext } from '../types';
 import { t } from '../bot_messages';
 import { AddressService } from 'src/address/address.service';
 import { UserService } from 'src/user/user.service';
+import { TelegramService } from 'src/telegram/telegram.service';
 
 export function setupMySpotsCommand(
-    bot: BotContext,
+    telegramService: TelegramService,
     userService: UserService,
-    addressService: AddressService
+    addressService: AddressService,
 ) {
+    const bot = telegramService.bot;
     bot.command('my_spots', async (ctx) => {
         const telegramId = String(ctx.from?.id);
         const user = await userService.findByTelegramId(telegramId);
@@ -24,77 +26,53 @@ export function setupMySpotsCommand(
 
         for (const address of addresses) {
             for (const spot of address.spots) {
+                const isReservedByOwner = spot.renter?.id === user.id;
+                const renterName = spot.renter?.fullName ?? '-';
+
+                const status = isReservedByOwner
+                    ? t(lang, 'RESERVED_BY_YOU')
+                    : spot.renter
+                        ? t(lang, 'RENTED_BY', { name: renterName })
+                        : t(lang, 'NOT_RENTED');
+
+                const buttons: any[] = [
+                    [
+                        { text: t(lang, 'EDIT_PRICE'), callback_data: `edit_price_${spot.id}` },
+                        { text: t(lang, 'DELETE_SPOT'), callback_data: `delete_spot_${spot.id}` },
+                    ],
+                    [
+                        { text: t(lang, 'DEACTIVATE_SPOT'), callback_data: `deactivate_spot_${spot.id}` },
+                        { text: t(lang, 'RESERVE_FOR_ME'), callback_data: `reserve_spot_${spot.id}` },
+                    ],
+                ];
+
+                if (spot.renter) {
+                    buttons.push([
+                        { text: t(lang, 'CLEAR_RENTER'), callback_data: `clear_renter_${spot.id}` },
+                    ]);
+                }
+
                 await ctx.reply(
-                    `${address.name} — №${spot.spotNumber}\n💸 ${spot.price} ${spot.currency}`,
-                    {
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    {
-                                        text: t(lang, 'EDIT_PRICE'),
-                                        callback_data: `edit_price_${spot.id}`,
-                                    },
-                                    {
-                                        text: t(lang, 'DELETE_SPOT'),
-                                        callback_data: `delete_spot_${spot.id}`,
-                                    },
-                                ],
-                                [
-                                    {
-                                        text: t(lang, 'DEACTIVATE_SPOT'),
-                                        callback_data: `deactivate_spot_${spot.id}`,
-                                    },
-                                    {
-                                        text: t(lang, 'RESERVE_FOR_ME'),
-                                        callback_data: `reserve_spot_${spot.id}`,
-                                    },
-                                ],
-                            ],
-                        },
-                    }
+                    `${address.name} — №${spot.spotNumber}\n💸 ${spot.price} ${spot.currency}\n${status}`,
+                    { reply_markup: { inline_keyboard: buttons } }
                 );
             }
         }
     });
 
-    bot.callbackQuery(/^edit_price_(\d+)$/, async (ctx) => {
+    bot.callbackQuery(/^clear_renter_(\d+)$/, async (ctx) => {
         const spotId = Number(ctx.match[1]);
-        ctx.session.temp.spotId = spotId;
-        ctx.session.step = 'edit_spot_price';
-
         const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
+
+        const clearedSpot = await addressService.clearRenterFromSpot(spotId);
+        if (clearedSpot?.renter?.telegramId) {
+            await telegramService.notifyUser(
+                clearedSpot.renter.telegramId,
+                t(clearedSpot.renter.language || 'uk', 'RENT_REMOVED_BY_OWNER')
+            );
+        }
+
         await ctx.answerCallbackQuery();
-        await ctx.reply(t(lang, 'ENTER_NEW_PRICE'));
-    });
-
-    bot.callbackQuery(/^delete_spot_(\d+)$/, async (ctx) => {
-        const spotId = Number(ctx.match[1]);
-        await addressService.deleteSpotById(spotId);
-
-        const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
-        await ctx.answerCallbackQuery();
-        await ctx.reply(t(lang, 'SPOT_DELETED'));
-    });
-
-    bot.callbackQuery(/^deactivate_spot_(\d+)$/, async (ctx) => {
-        const spotId = Number(ctx.match[1]);
-        await addressService.updateSpotStatus(spotId, false); // припустимо `isActive = false`
-
-        const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
-        await ctx.answerCallbackQuery();
-        await ctx.reply(t(lang, 'SPOT_DEACTIVATED'));
-    });
-
-    bot.callbackQuery(/^reserve_spot_(\d+)$/, async (ctx) => {
-        const spotId = Number(ctx.match[1]);
-        const telegramId = String(ctx.from.id);
-        const user = await userService.findByTelegramId(telegramId);
-
-        if (!user) return;
-        await addressService.reserveSpotForOwner(spotId, user.id);
-
-        const lang = user?.language || 'uk';
-        await ctx.answerCallbackQuery();
-        await ctx.reply(t(lang, 'SPOT_RESERVED'));
+        await ctx.reply(t(lang, 'RENTER_REMOVED'));
     });
 }

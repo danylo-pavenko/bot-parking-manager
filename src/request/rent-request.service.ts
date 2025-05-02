@@ -2,18 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RentRequest } from 'src/entities/rent-request.entity';
-import { User } from 'src/entities/user.entity';
-import { ParkingSpot } from 'src/entities/parking-spot.entity';
+import { addDays } from 'date-fns';
 
 @Injectable()
 export class RentRequestService {
     constructor(
         @InjectRepository(RentRequest)
         private readonly repo: Repository<RentRequest>,
-        @InjectRepository(User)
-        private readonly userRepo: Repository<User>,
-        @InjectRepository(ParkingSpot)
-        private readonly spotRepo: Repository<ParkingSpot>,
     ) { }
 
     async create(data: {
@@ -22,19 +17,21 @@ export class RentRequestService {
         fullName: string;
         phone: string;
         ipn: string;
-        paymentMethod: 'CASH' | 'CARD';
+        paymentMethod: 'CARD' | 'CASH';
     }): Promise<RentRequest> {
-        const renter = await this.userRepo.findOneByOrFail({ id: data.renterId });
-        const spot = await this.spotRepo.findOneByOrFail({ id: data.spotId });
+        const now = new Date();
+        const endDate = addDays(now, 30); // або 1 день якщо подобово
 
         const request = this.repo.create({
-            renter,
-            spot,
+            renter: { id: data.renterId },
+            spot: { id: data.spotId },
             fullName: data.fullName,
             phone: data.phone,
             ipn: data.ipn,
             paymentMethod: data.paymentMethod,
             status: 'PENDING',
+            startDate: now,
+            endDate,
         });
 
         return this.repo.save(request);
@@ -90,6 +87,30 @@ export class RentRequestService {
     async findApprovedByRenter(renterId: number) {
         return this.repo.find({
             where: { renter: { id: renterId }, status: 'APPROVED' },
+            relations: ['spot', 'spot.address'],
+        });
+    }
+
+    async findEndingSoon(date: Date): Promise<RentRequest[]> {
+        return this.repo.find({
+            where: {
+                endDate: date,
+                status: 'APPROVED',
+            },
+            relations: ['renter', 'spot', 'spot.address'],
+        });
+    }
+
+    async deleteById(requestId: number): Promise<void> {
+        await this.repo.delete({ id: requestId });
+    }
+
+    async findActiveByRenter(renterId: number): Promise<RentRequest[]> {
+        return this.repo.find({
+            where: {
+                renter: { id: renterId },
+                status: 'APPROVED',
+            },
             relations: ['spot', 'spot.address'],
         });
     }

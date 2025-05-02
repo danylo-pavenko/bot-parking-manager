@@ -150,4 +150,20 @@ export class AddressService {
             carPlate: undefined,
         });
     }
+
+    async clearRenterFromSpot(spotId: number): Promise<ParkingSpot | null> {
+        const spot = await this.spotRepo.findOne({
+            where: { id: spotId },
+            relations: ['renter'],
+        });
+
+        if (!spot) return null;
+
+        spot.renter = undefined;
+        spot.carPlate = undefined;
+        
+        await this.spotRepo.save(spot);
+
+        return spot;
+    }
 }
