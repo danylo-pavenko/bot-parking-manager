@@ -9,7 +9,6 @@ import { RentRequest } from './entities/rent-request.entity';
 import { GuardAccess } from './entities/guard-access.entity';
 import { WithdrawRequest } from './entities/withdraw-request.entity';
 import { TelegramAdmin } from './entities/telegram-admin.entity';
-import { RentRequestService } from './request/rent-request.service';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,15 +17,15 @@ dotenv.config();
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-        type: 'postgres',
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT!),
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        synchronize: process.env.NODE_ENV !== 'production',
-        entities: [User, Address, ParkingSpot, RentRequest, GuardAccess, WithdrawRequest, TelegramAdmin],
-      }
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT!),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      synchronize: false,
+      entities: [User, Address, ParkingSpot, RentRequest, GuardAccess, WithdrawRequest, TelegramAdmin],
+    }
     ),
     TelegramModule,
   ],
