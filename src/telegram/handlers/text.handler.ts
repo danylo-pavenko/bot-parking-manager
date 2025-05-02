@@ -256,4 +256,23 @@ export function registerTextHandler(
         await ctx.answerCallbackQuery();
         await ctx.reply(t(lang, 'GUARD_ASSIGNED'));
     });
+
+    bot.callbackQuery(/^lang_(uk|en)$/, async (ctx) => {
+        const lang = ctx.match[1] as 'uk' | 'en';
+        const telegramId = String(ctx.from.id);
+        await services.userService.updateLanguage(telegramId, lang);
+        ctx.session.step = 'role_selection';
+        await ctx.answerCallbackQuery();
+        await ctx.editMessageText(t(lang, 'CHOOSE_ROLE'), {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: t(lang, 'ROLE_OWNER'), callback_data: 'role_OWNER' },
+                        { text: t(lang, 'ROLE_RENTER'), callback_data: 'role_RENTER' },
+                        { text: t(lang, 'ROLE_GUARD'), callback_data: 'role_GUARD' },
+                    ],
+                ],
+            },
+        });
+    });
 }

@@ -14,15 +14,15 @@ export function setupLanguageCommand(bot: BotContext, userService: UserService) 
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: '🇺🇦 Українська', callback_data: 'lang_uk' },
-                        { text: '🇬🇧 English', callback_data: 'lang_en' },
+                        { text: '🇺🇦 Українська', callback_data: 'lang_set_uk' },
+                        { text: '🇬🇧 English', callback_data: 'lang_set_en' },
                     ],
                 ],
             },
         });
     });
 
-    bot.callbackQuery(/^lang_(uk|en)$/, async (ctx) => {
+    bot.callbackQuery(/^lang_set_(uk|en)$/, async (ctx) => {
         const lang = ctx.match[1] as 'uk' | 'en';
         const telegramId = String(ctx.from.id);
         await userService.updateLanguage(telegramId, lang);

@@ -30,25 +30,6 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
         });
     });
 
-    bot.callbackQuery(/^lang_(uk|en)$/, async (ctx) => {
-        const lang = ctx.match[1] as 'uk' | 'en';
-        const telegramId = String(ctx.from.id);
-        await userService.updateLanguage(telegramId, lang);
-        ctx.session.step = 'role_selection';
-        await ctx.answerCallbackQuery();
-        await ctx.editMessageText(t(lang, 'CHOOSE_ROLE'), {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: t(lang, 'ROLE_OWNER'), callback_data: 'role_OWNER' },
-                        { text: t(lang, 'ROLE_RENTER'), callback_data: 'role_RENTER' },
-                        { text: t(lang, 'ROLE_GUARD'), callback_data: 'role_GUARD' },
-                    ],
-                ],
-            },
-        });
-    });
-
     bot.callbackQuery(/^role_(OWNER|RENTER|GUARD)$/, async (ctx) => {
         const role = ctx.match[1] as UserRole;
         const telegramId = String(ctx.from.id);
@@ -70,5 +51,12 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
                 },
             });
         }
+    });
+
+    bot.callbackQuery('search_now', async (ctx) => {
+        const lang = (await this.userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
+        ctx.session.step = 'search_input';
+        await ctx.answerCallbackQuery();
+        await ctx.reply(t(lang, 'SEARCH_ENTER_STREET'));
     });
 }
