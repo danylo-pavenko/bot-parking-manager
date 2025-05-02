@@ -4,15 +4,17 @@ import { UserService } from 'src/user/user.service';
 import { AddressService } from 'src/address/address.service';
 import { RentRequestService } from 'src/request/rent-request.service';
 import { UserRole } from 'src/entities/user.entity';
+import { TelegramService } from '../telegram.service';
 
 export function registerTextHandler(
-    bot: BotContext,
+    telegramService: TelegramService,
     services: {
         userService: UserService;
         addressService: AddressService;
         rentRequestService: RentRequestService;
     }
 ) {
+    const bot = telegramService.bot;
     bot.on('message:text', async (ctx) => {
         const telegramId = String(ctx.from.id);
         const user = await services.userService.findByTelegramId(telegramId);
@@ -219,7 +221,7 @@ export function registerTextHandler(
             return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
         }
 
-        await services.rentRequestService.create({
+        const request = await services.rentRequestService.create({
             renterId: user.id,
             spotId,
             fullName,
@@ -232,6 +234,7 @@ export function registerTextHandler(
         ctx.session.step = undefined;
         ctx.session.temp = {};
 
+        await telegramService.notifyOwnerAboutRequest(request);
         await ctx.answerCallbackQuery();
         return ctx.reply(t(lang, 'RENT_REQUEST_SUBMITTED'));
     });

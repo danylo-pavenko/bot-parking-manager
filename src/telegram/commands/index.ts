@@ -18,15 +18,18 @@ import { setupAdminStatsCommand } from './admin-stats.command';
 import { setupAdminWithdrawsCommand } from './admin-withdraws.command';
 import { setupAdminGrantCommand } from './admin-grant.command';
 import { setupMeCommand } from './me.command';
+import { TelegramService } from '../telegram.service';
+import { setupMySpotsCommand } from './my-spots.command';
 
 export function registerCommands(
-    bot: BotContext,
+    telegramService: TelegramService,
     services: {
         userService: UserService;
         addressService: AddressService;
         rentRequestService: RentRequestService;
     }
 ) {
+    const bot = telegramService.bot;
     setupStartCommand(bot, services.userService);
     setupLanguageCommand(bot, services.userService);
     setupAddAddressCommand(bot, services.userService);
@@ -42,4 +45,5 @@ export function registerCommands(
     setupAdminWithdrawsCommand(bot, services.userService);
     setupAdminGrantCommand(bot, services.userService);
     setupMeCommand(bot, services);
+    setupMySpotsCommand(bot, services.userService, services.addressService);
 }

@@ -14,7 +14,8 @@ import { t } from './bot_messages';
 
 @Injectable()
 export class TelegramService implements OnModuleDestroy {
-    private readonly bot: Bot<Context & HydrateFlavor<Context> & { session: SessionData }>;
+    
+    public readonly bot: Bot<Context & HydrateFlavor<Context> & { session: SessionData }>;
 
     constructor(
         private config: ConfigService,
@@ -26,13 +27,13 @@ export class TelegramService implements OnModuleDestroy {
         this.bot.use(session({ initial: (): SessionData => ({ temp: {} }) }));
         this.bot.use(hydrate());
 
-        registerCommands(this.bot, {
+        registerCommands(this, {
             userService: this.userService,
             addressService: this.addressService,
             rentRequestService: this.rentRequestService,
         });
 
-        registerTextHandler(this.bot, {
+        registerTextHandler(this, {
             userService: this.userService,
             addressService: this.addressService,
             rentRequestService: this.rentRequestService,

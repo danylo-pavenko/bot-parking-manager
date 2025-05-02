@@ -28,11 +28,11 @@ export class AddressService {
 
     async create(name: string, creatorId: number): Promise<Address> {
         const address = this.addressRepo.create({
-          name,
-          creator: { id: creatorId },
+            name,
+            creator: { id: creatorId },
         });
         return this.addressRepo.save(address);
-      }
+    }
 
     async findAll(): Promise<Address[]> {
         return this.addressRepo.find();
@@ -118,6 +118,36 @@ export class AddressService {
         return this.spotRepo.find({
             where: { owner: { id: ownerId } },
             relations: ['address'],
+        });
+    }
+
+    async findSpotById(id: number): Promise<ParkingSpot | null> {
+        return this.spotRepo.findOne({ where: { id } });
+    }
+
+    async findAllByOwnerWithSpots(ownerId: number) {
+        return this.addressRepo.find({
+            relations: ['spots', 'spots.renter'],
+            where: {
+                spots: {
+                    owner: { id: ownerId },
+                },
+            },
+        });
+    }
+
+    async deleteSpotById(spotId: number): Promise<void> {
+        await this.spotRepo.delete({ id: spotId });
+    }
+
+    async updateSpotStatus(spotId: number, isActive: boolean): Promise<void> {
+        await this.spotRepo.update({ id: spotId }, { isActive });
+    }
+
+    async reserveSpotForOwner(spotId: number, ownerId: number): Promise<void> {
+        await this.spotRepo.update({ id: spotId }, {
+            renter: { id: ownerId },
+            carPlate: undefined,
         });
     }
 }

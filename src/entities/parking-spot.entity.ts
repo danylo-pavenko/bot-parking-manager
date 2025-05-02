@@ -24,6 +24,9 @@ export class ParkingSpot {
     @Column({ type: 'enum', enum: ['UAH', 'USD', 'EUR'] })
     currency: 'UAH' | 'USD' | 'EUR';
 
+    @Column({ default: true })
+    isActive: boolean;
+
     @ManyToOne(() => Address, (address) => address.spots, { eager: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'addressId' })
     address: Address;

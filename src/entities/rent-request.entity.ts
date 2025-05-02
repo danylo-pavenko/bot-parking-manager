@@ -30,4 +30,10 @@ export class RentRequest {
 
     @Column({ type: 'timestamp', nullable: true })
     confirmedAt?: Date;
+
+    @Column({ type: 'date', nullable: true })
+    startDate?: Date;
+
+    @Column({ type: 'date', nullable: true })
+    endDate?: Date;
 }

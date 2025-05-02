@@ -10,6 +10,7 @@ import { GuardAccess } from './entities/guard-access.entity';
 import { WithdrawRequest } from './entities/withdraw-request.entity';
 import { TelegramAdmin } from './entities/telegram-admin.entity';
 import * as dotenv from 'dotenv';
+import { ScheduleModule } from '@nestjs/schedule';
 
 dotenv.config();
 
@@ -23,11 +24,12 @@ dotenv.config();
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      synchronize: false,
+      synchronize: true,
       entities: [User, Address, ParkingSpot, RentRequest, GuardAccess, WithdrawRequest, TelegramAdmin],
     }
     ),
     TelegramModule,
+    ScheduleModule.forRoot(),
   ],
   providers: [ConfigService],
   exports: [ConfigService],
