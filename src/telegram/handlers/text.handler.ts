@@ -28,7 +28,7 @@ export function registerTextHandler(
                 ctx.session.step = undefined;
                 if (exists) return ctx.reply(t(lang, 'ADDRESS_EXISTS'));
 
-                await services.addressService.create(addressName);
+                await services.addressService.create(addressName, user.id);
                 return ctx.reply(t(lang, 'ADDRESS_ADDED'));
             }
 

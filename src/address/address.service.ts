@@ -26,10 +26,13 @@ export class AddressService {
         });
     }
 
-    async create(name: string): Promise<Address> {
-        const address = this.addressRepo.create({ name });
+    async create(name: string, creatorId: number): Promise<Address> {
+        const address = this.addressRepo.create({
+          name,
+          creator: { id: creatorId },
+        });
         return this.addressRepo.save(address);
-    }
+      }
 
     async findAll(): Promise<Address[]> {
         return this.addressRepo.find();
@@ -101,11 +104,10 @@ export class AddressService {
     }
 
     async findAllByOwner(ownerId: number): Promise<Address[]> {
-        return this.addressRepo
-            .createQueryBuilder('address')
-            .innerJoin('address.spots', 'spot')
-            .where('spot.ownerId = :ownerId', { ownerId })
-            .getMany();
+        return this.addressRepo.find({
+            where: { creator: { id: ownerId } },
+            relations: ['spots'], // якщо потрібно
+        });
     }
 
     async countSpots(): Promise<number> {
