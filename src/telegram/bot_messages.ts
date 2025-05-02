@@ -52,6 +52,9 @@ export const messages: Record<Lang, Record<string, string>> = {
         OWNER_NO_SPOTS: 'У вас немає доданих паркомісць.',
         RENTER_CURRENT_RENT: 'Ваші активні оренди',
         RENTER_NO_RENT: 'У вас немає підтверджених оренд.',
+        NEW_RENT_REQUEST: '🔔 Нова заявка на оренду паркомісця {spot} від {renter}. Підтвердіть у /confirm_cash – якщо прийняли оплату готівкою.',
+        SUGGEST_RENTER_SEARCH: '🔎 Хочете одразу знайти доступне паркомісце?',
+        SEARCH_NOW: '🔍 Знайти зараз',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -104,6 +107,9 @@ export const messages: Record<Lang, Record<string, string>> = {
         OWNER_NO_SPOTS: 'You have no parking spots.',
         RENTER_CURRENT_RENT: 'Your current rentals',
         RENTER_NO_RENT: 'You have no confirmed rentals.',
+        NEW_RENT_REQUEST: '🔔 New parking spot rental request {spot} from {renter}. Confirm at /confirm_cash – if you received payment in cash.',
+        SUGGEST_RENTER_SEARCH: '🔎 Would you like to search for a parking spot right now?',
+        SEARCH_NOW: '🔍 Search now',
     },
 };
 

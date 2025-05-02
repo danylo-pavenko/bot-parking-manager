@@ -9,6 +9,8 @@ import { SessionData } from './session';
 
 import { registerCommands } from './commands';
 import { registerTextHandler } from './handlers/text.handler';
+import { RentRequest } from 'src/entities/rent-request.entity';
+import { t } from './bot_messages';
 
 @Injectable()
 export class TelegramService implements OnModuleDestroy {
@@ -44,5 +46,16 @@ export class TelegramService implements OnModuleDestroy {
 
     async onModuleDestroy() {
         await this.bot.stop();
+    }
+
+    async notifyOwnerAboutRequest(request: RentRequest) {
+        const owner = request.spot.owner;
+        const lang = owner.language || 'uk';
+        const message = t(lang, 'NEW_RENT_REQUEST', {
+            spot: `${request.spot.address.name} — ${request.spot.spotNumber}`,
+            renter: request.renter.fullName,
+        });
+    
+        await this.bot.api.sendMessage(Number(owner.telegramId), message);
     }
 }

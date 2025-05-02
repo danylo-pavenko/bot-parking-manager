@@ -54,9 +54,21 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
         const telegramId = String(ctx.from.id);
         await userService.updateRole(telegramId, role);
         ctx.session.step = undefined;
+        
         const user = await userService.findByTelegramId(telegramId);
         const lang = user?.language || 'uk';
+
         await ctx.answerCallbackQuery();
         await ctx.editMessageText(t(lang, 'REGISTRATION_DONE'));
+
+        if (role === UserRole.RENTER) {
+            await ctx.reply(t(lang, 'SUGGEST_RENTER_SEARCH'), {
+                reply_markup: {
+                    inline_keyboard: [[
+                        { text: t(lang, 'SEARCH_NOW'), callback_data: 'search_now' },
+                    ]],
+                },
+            });
+        }
     });
 }
