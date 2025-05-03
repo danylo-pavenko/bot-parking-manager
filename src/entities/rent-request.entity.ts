@@ -13,8 +13,8 @@ export class RentRequest {
     @ManyToOne(() => ParkingSpot, { eager: true })
     spot: ParkingSpot;
 
-    @Column({ type: 'enum', enum: ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED'] })
-    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+    @Column({ type: 'enum', enum: ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED'] })
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
 
     @Column({ type: 'enum', enum: ['CARD', 'CASH'] })
     paymentMethod: 'CARD' | 'CASH';
@@ -36,4 +36,7 @@ export class RentRequest {
 
     @Column({ type: 'timestamp', nullable: true })
     endDate: Date;
+
+    @Column({ type: 'timestamp', nullable: true })
+    cancelledAt?: Date;
 }

@@ -2,12 +2,14 @@ import { BotContext } from '../types';
 import { t } from '../bot_messages';
 import { UserService } from 'src/user/user.service';
 import { RentRequestService } from 'src/request/rent-request.service';
+import { TelegramService } from '../telegram.service';
 
 export function setupConfirmCashCommand(
-    bot: BotContext,
+    telegramService: TelegramService,
     userService: UserService,
     rentRequestService: RentRequestService
 ) {
+    const bot = telegramService.bot;
     bot.command('confirm_cash', async (ctx) => {
         if (!ctx.from) return;
 
@@ -45,8 +47,21 @@ export function setupConfirmCashCommand(
         const user = await userService.findByTelegramId(telegramId);
         const lang = user?.language || 'uk';
 
+        const request = await rentRequestService.findByIdWithRelations(requestId); // отримаємо повний об'єкт із renter
+
+        if (!request || !request.renter) {
+            await ctx.answerCallbackQuery();
+            return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
+        }
+
         await rentRequestService.approve(requestId);
         await rentRequestService.markConfirmed(requestId);
+
+        // 🔔 Надсилаємо повідомлення орендарю
+        await telegramService.notifyUser(
+            request.renter.telegramId,
+            `✅ ${t(request.renter.language || 'uk', 'RENT_CONFIRMED_BY_OWNER')} ${request.spot.address.name} — ${request.spot.spotNumber}`
+        );
 
         ctx.session.step = undefined;
         ctx.session.temp = {};
@@ -54,4 +69,5 @@ export function setupConfirmCashCommand(
         await ctx.answerCallbackQuery();
         return ctx.reply(t(lang, 'RENT_CONFIRMED'));
     });
+
 }

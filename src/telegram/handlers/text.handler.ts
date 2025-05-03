@@ -95,12 +95,27 @@ export function registerTextHandler(
                     return ctx.reply(t(lang, 'SEARCH_NOT_FOUND'));
                 }
 
-                const messages = spots.map((s, i) =>
-                    `${i + 1}. ${s.address.name} — ${s.spotNumber}, ${s.price} ${s.currency}`
-                );
+                for (const spot of spots) {
+                    await ctx.reply(
+                        `${spot.address.name} — №${spot.spotNumber}\n💸 ${spot.price} ${spot.currency}`,
+                        {
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [
+                                        {
+                                            text: t(lang, 'RENT_THIS_SPOT'),
+                                            callback_data: `rent_spot_${spot.id}`,
+                                        },
+                                    ],
+                                ],
+                            },
+                        }
+                    );
+                }
 
-                return ctx.reply(messages.join('\n'));
+                return;
             }
+
 
             // === RENT PARKING SPOT ===
             case 'rent_input_fio': {

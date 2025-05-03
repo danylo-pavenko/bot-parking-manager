@@ -40,7 +40,7 @@ export function registerCommands(
     setupSetGuardCommand(bot, services.userService, services.addressService);
     setupSearchCommand(bot, services.userService);
     setupRentCommand(bot, services.userService, services.addressService);
-    setupConfirmCashCommand(bot, services.userService, services.rentRequestService);
+    setupConfirmCashCommand(telegramService, services.userService, services.rentRequestService);
     setupCheckCarCommand(bot, services.userService);
     setupWithdrawCommand(bot, services.userService);
     setupAdminStatsCommand(bot, services);

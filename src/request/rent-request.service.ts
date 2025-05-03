@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { RentRequest } from 'src/entities/rent-request.entity';
+import { ParkingSpot } from 'src/entities/parking-spot.entity';
 import { addDays } from 'date-fns';
 
 @Injectable()
@@ -9,6 +10,8 @@ export class RentRequestService {
     constructor(
         @InjectRepository(RentRequest)
         private readonly repo: Repository<RentRequest>,
+        @InjectRepository(ParkingSpot)
+        private readonly spotRepo: Repository<ParkingSpot>,
     ) { }
 
     async create(data: {
@@ -20,7 +23,7 @@ export class RentRequestService {
         paymentMethod: 'CARD' | 'CASH';
     }): Promise<RentRequest> {
         const now = new Date();
-        const endDate = addDays(now, 30); // або 1 день якщо подобово
+        const endDate = addDays(now, 30); // default 30 days
 
         const request = this.repo.create({
             renter: { id: data.renterId },
@@ -34,7 +37,12 @@ export class RentRequestService {
             endDate,
         });
 
-        return this.repo.save(request);
+        const saved = await this.repo.save(request);
+
+        return this.repo.findOne({
+            where: { id: saved.id },
+            relations: ['renter', 'spot', 'spot.address'],
+        }) as Promise<RentRequest>;
     }
 
 
@@ -84,13 +92,6 @@ export class RentRequestService {
         });
     }
 
-    async findApprovedByRenter(renterId: number) {
-        return this.repo.find({
-            where: { renter: { id: renterId }, status: 'APPROVED' },
-            relations: ['spot', 'spot.address'],
-        });
-    }
-
     async findEndingSoon(date: Date): Promise<RentRequest[]> {
         return this.repo.find({
             where: {
@@ -109,9 +110,79 @@ export class RentRequestService {
         return this.repo.find({
             where: {
                 renter: { id: renterId },
+                status: In(['APPROVED', 'PENDING']),
+            },
+            relations: ['spot', 'spot.address'],
+        });
+    }
+
+    async findApprovedByRenter(renterId: number): Promise<RentRequest[]> {
+        return this.repo.find({
+            where: {
+                renter: { id: renterId },
                 status: 'APPROVED',
             },
             relations: ['spot', 'spot.address'],
+            order: { endDate: 'ASC' },
+        });
+    }
+
+    async cancelAfterEndDate(requestId: number): Promise<void> {
+        const request = await this.repo.findOne({
+            where: { id: requestId },
+            relations: ['spot'],
+        });
+
+        if (!request) return;
+
+        request.status = 'CANCELLED';
+        request.endDate = new Date(); // завершення одразу
+        await this.repo.save(request);
+
+        // очистити місце
+        if (request.spot) {
+            request.spot.renter = null;
+            request.spot.carPlate = null;
+            await this.spotRepo.save(request.spot);
+        }
+    }
+
+    async cancelApprovedAfterNow(requestId: number): Promise<void> {
+        const request = await this.repo.findOne({
+            where: { id: requestId, status: 'APPROVED' },
+            relations: ['spot'],
+        });
+
+        if (!request) return;
+
+        request.status = 'CANCELLED';
+        await this.repo.save(request);
+    }
+
+    async closeExpiredRents(now: Date): Promise<void> {
+        const expired = await this.repo.find({
+            where: [
+                { status: 'APPROVED', endDate: LessThanOrEqual(now) },
+            ],
+            relations: ['spot'],
+        });
+
+        for (const r of expired) {
+            r.status = 'COMPLETED';
+            await this.repo.save(r);
+
+            if (r.spot) {
+                r.spot.renter = null;
+                r.spot.carPlate = null;
+                await this.spotRepo.save(r.spot);
+            }
+        }
+    }
+
+    async findByIdWithRelations(id: number): Promise<RentRequest | null> {
+        return this.repo.findOne({
+            where: { id },
+            relations: ['renter', 'spot', 'spot.address'],
         });
     }
 }

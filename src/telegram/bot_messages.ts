@@ -81,6 +81,13 @@ export const messages: Record<Lang, Record<string, string>> = {
         RENT_REMOVED_BY_OWNER: '⛔️ Вас було скинуто з орендованого паркомісця власником.',
         ENTER_CAR_PLATE: 'Введіть номер авто:',
         CAR_NOT_FOUND: '❌ Автомобіль з таким номером не знайдено серед орендованих місць.',
+        CANCEL_RENT_AFTER_PERIOD: '📅 Скасувати після завершення оренди',
+        RENT_CANCELLED_AFTER_PERIOD: '✅ Оренду буде скасовано після завершення періоду',
+        CANCELLED_ON: 'Скасовано',
+        EXPIRED_ON: 'Завершено',
+        ACTIVE_UNTIL: 'Активне до',
+        RENT_THIS_SPOT: '🚗 Орендувати це місце',
+        RENT_CONFIRMED_BY_OWNER: 'Ваша оренда підтверджена власником.',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -162,6 +169,13 @@ export const messages: Record<Lang, Record<string, string>> = {
         RENT_REMOVED_BY_OWNER: '⛔️ You have been removed from the rented parking spot by the owner.',
         ENTER_CAR_PLATE: 'Enter your car plate number:',
         CAR_NOT_FOUND: '❌ No rented parking spot found for this car plate.',
+        CANCEL_RENT_AFTER_PERIOD: '📅 Cancel after rental ends',
+        RENT_CANCELLED_AFTER_PERIOD: '✅ Rent will be cancelled after the period ends',
+        CANCELLED_ON: 'Cancelled on',
+        EXPIRED_ON: 'Ended on',
+        ACTIVE_UNTIL: 'Active until',
+        RENT_THIS_SPOT: '🚗 Rent this spot',
+        RENT_CONFIRMED_BY_OWNER: 'Your rental has been confirmed by the owner.',
     },
 };
 

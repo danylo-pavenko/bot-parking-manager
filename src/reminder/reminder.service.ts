@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { RentRequestService } from '../request/rent-request.service';
 import { TelegramService } from '../telegram/telegram.service';
 
@@ -27,5 +27,12 @@ export class ReminderService {
                 );
             }
         }
+    }
+
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    async handleExpiredRents() {
+        console.log('[CRON] Checking for expired rents...');
+        const now = new Date();
+        await this.rentRequestService.closeExpiredRents(now);
     }
 }

@@ -51,7 +51,7 @@ export class TelegramService implements OnModuleDestroy {
 
     async notifyOwnerAboutRequest(request: RentRequest) {
         const owner = request.spot.owner;
-        const lang = owner.language || 'uk';
+        const lang = owner?.language || 'uk';
         const message = t(lang, 'NEW_RENT_REQUEST', {
             spot: `${request.spot.address.name} — ${request.spot.spotNumber}`,
             renter: request.renter.fullName,
