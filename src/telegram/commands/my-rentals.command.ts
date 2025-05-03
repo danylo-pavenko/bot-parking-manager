@@ -15,7 +15,7 @@ export function setupMyRentalsCommand(
         const user = await userService.findByTelegramId(telegramId);
         const lang = user?.language || 'uk';
 
-        if (user?.role !== 'RENTER') {
+        if (user?.role === 'GUARD') {
             return ctx.reply(t(lang, 'ONLY_RENTER'));
         }
 

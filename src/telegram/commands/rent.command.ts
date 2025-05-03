@@ -6,7 +6,7 @@ import { AddressService } from 'src/address/address.service';
 export function setupRentCommand(
     bot: BotContext,
     userService: UserService,
-    addressService: AddressService
+    addressService: AddressService,
 ) {
     bot.command('rent', async (ctx) => {
         if (!ctx.from) return;
@@ -45,9 +45,20 @@ export function setupRentCommand(
         const user = await userService.findByTelegramId(telegramId);
         const lang = user?.language || 'uk';
 
+        const spot = await addressService.findSpotById(spotId);
+        if (!spot) {
+            await ctx.answerCallbackQuery();
+            return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
+        }
+
+        if (spot.owner.id === user!.id) {
+            await addressService.reserveSpotForOwner(spotId, user!.id);
+            await ctx.answerCallbackQuery();
+            return ctx.reply(t(lang, 'SPOT_RESERVED'));
+        }
+
         ctx.session.temp.spotId = spotId;
         ctx.session.step = 'rent_input_fio';
-
         await ctx.answerCallbackQuery();
         await ctx.reply(t(lang, 'RENT_ENTER_FIO'));
     });
