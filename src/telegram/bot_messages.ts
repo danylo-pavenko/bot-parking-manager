@@ -79,6 +79,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         CLEAR_RENTER: '🗑️ Скинути орендаря',
         RENTER_REMOVED: '✅ Орендаря скинуто з місця',
         RENT_REMOVED_BY_OWNER: '⛔️ Вас було скинуто з орендованого паркомісця власником.',
+        ENTER_CAR_PLATE: 'Введіть номер авто:',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -158,6 +159,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         CLEAR_RENTER: '🗑️ Clear renter',
         RENTER_REMOVED: '✅ Renter removed from the spot',
         RENT_REMOVED_BY_OWNER: '⛔️ You have been removed from the rented parking spot by the owner.',
+        ENTER_CAR_PLATE: 'Enter your car plate number:',
     },
 };
 
