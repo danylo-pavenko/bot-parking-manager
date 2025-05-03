@@ -79,6 +79,7 @@ export class AddressService {
                     name: ILike(`%${query}%`),
                 },
                 renter: IsNull(),
+                isActive: true,
             },
             relations: ['address'],
             take: 10,
@@ -87,8 +88,11 @@ export class AddressService {
 
     async findAvailableSpots(): Promise<ParkingSpot[]> {
         return this.spotRepo.find({
-            where: { renter: IsNull() },
-            relations: ['address'],
+            where: {
+                renter: IsNull(),
+                isActive: true,
+            },
+            relations: ['address', 'owner'],
             take: 10,
         });
     }

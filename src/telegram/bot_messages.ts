@@ -90,6 +90,9 @@ export const messages: Record<Lang, Record<string, string>> = {
         RENT_CONFIRMED_BY_OWNER: 'Ваша оренда підтверджена власником.',
         RENT_DUPLICATE_IPN: '❌ Ви вже подали заявку на це місце з таким ІПН.',
         ONLY_GUARD: '❌ Ця команда доступна лише охоронцям.',
+        SPOT_NOT_ACTIVE: '❌ Це паркомісце наразі не активне.',
+        SPOT_ALREADY_RENTED: '❌ Це паркомісце вже орендовано іншою особою.',
+        SPOT_INACTIVE: '⛔️ Це паркомісце наразі деактивоване.',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -180,6 +183,9 @@ export const messages: Record<Lang, Record<string, string>> = {
         RENT_CONFIRMED_BY_OWNER: 'Your rental has been confirmed by the owner.',
         RENT_DUPLICATE_IPN: '❌ You have already submitted a request for this spot with the same tax ID.',
         ONLY_GUARD: '❌ This command is available only for guards.',
+        SPOT_NOT_ACTIVE: '❌ This parking spot is currently inactive.',
+        SPOT_ALREADY_RENTED: '❌ This parking spot is already rented by someone else.',
+        SPOT_INACTIVE: '⛔️ This spot is currently deactivated.',
     },
 };
 

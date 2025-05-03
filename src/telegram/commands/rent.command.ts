@@ -51,6 +51,16 @@ export function setupRentCommand(
             return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
         }
 
+        if (!spot.isActive) {
+            await ctx.answerCallbackQuery();
+            return ctx.reply(t(lang, 'SPOT_NOT_ACTIVE'));
+        }
+
+        if (spot.renter) {
+            await ctx.answerCallbackQuery();
+            return ctx.reply(t(lang, 'SPOT_ALREADY_RENTED'));
+        }
+
         if (spot.owner.id === user!.id) {
             await addressService.reserveSpotForOwner(spotId, user!.id);
             await ctx.answerCallbackQuery();

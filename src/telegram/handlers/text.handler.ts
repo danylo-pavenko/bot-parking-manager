@@ -88,16 +88,22 @@ export function registerTextHandler(
             // === SEARCH PARKING SPOTS ===
             case 'search_input': {
                 const query = ctx.message.text.trim();
+                const telegramId = String(ctx.from.id);
+                const user = await services.userService.findByTelegramId(telegramId);
+                const lang = user?.language || 'uk';
+
                 const spots = await services.addressService.searchAvailableSpotsByStreet(query);
                 ctx.session.step = undefined;
 
-                if (!spots.length) {
+                const filteredSpots = spots.filter((s) => s.isActive && !s.renter);
+
+                if (!filteredSpots.length) {
                     return ctx.reply(t(lang, 'SEARCH_NOT_FOUND'));
                 }
 
-                for (const spot of spots) {
+                for (const spot of filteredSpots) {
                     await ctx.reply(
-                        `${spot.address.name} — №${spot.spotNumber}\n💸 ${spot.price} ${spot.currency}`,
+                        `${spot.address.name} — ${spot.spotNumber}, ${spot.price} ${spot.currency}`,
                         {
                             reply_markup: {
                                 inline_keyboard: [
@@ -109,10 +115,9 @@ export function registerTextHandler(
                                     ],
                                 ],
                             },
-                        }
+                        },
                     );
                 }
-
                 return;
             }
 

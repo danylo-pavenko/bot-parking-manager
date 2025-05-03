@@ -13,10 +13,6 @@ export function setupSearchCommand(
         const user = await userService.findByTelegramId(telegramId);
         const lang = user?.language || 'uk';
 
-        if (user?.role !== 'RENTER') {
-            return ctx.reply(t(lang, 'ONLY_RENTER'));
-        }
-
         ctx.session.step = 'search_input';
         return ctx.reply(t(lang, 'SEARCH_ENTER_STREET'));
     });
