@@ -88,6 +88,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         ACTIVE_UNTIL: 'Активне до',
         RENT_THIS_SPOT: '🚗 Орендувати це місце',
         RENT_CONFIRMED_BY_OWNER: 'Ваша оренда підтверджена власником.',
+        RENT_DUPLICATE_IPN: '❌ Ви вже подали заявку на це місце з таким ІПН.',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -176,6 +177,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         ACTIVE_UNTIL: 'Active until',
         RENT_THIS_SPOT: '🚗 Rent this spot',
         RENT_CONFIRMED_BY_OWNER: 'Your rental has been confirmed by the owner.',
+        RENT_DUPLICATE_IPN: '❌ You have already submitted a request for this spot with the same tax ID.',
     },
 };
 

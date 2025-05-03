@@ -236,22 +236,29 @@ export function registerTextHandler(
             return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
         }
 
-        const request = await services.rentRequestService.create({
-            renterId: user.id,
-            spotId,
-            fullName,
-            phone,
-            ipn,
-            paymentMethod,
-        });
-        await services.userService.updateFullname(telegramId, fullName);
+        try {
+            const request = await services.rentRequestService.create({
+                renterId: user.id,
+                spotId,
+                fullName,
+                phone,
+                ipn,
+                paymentMethod,
+            });
+            await services.userService.updateFullname(telegramId, fullName);
+            ctx.session.step = undefined;
+            ctx.session.temp = {};
 
-        ctx.session.step = undefined;
-        ctx.session.temp = {};
-
-        await telegramService.notifyOwnerAboutRequest(request);
-        await ctx.answerCallbackQuery();
-        return ctx.reply(t(lang, 'RENT_REQUEST_SUBMITTED'));
+            await telegramService.notifyOwnerAboutRequest(request);
+            await ctx.answerCallbackQuery();
+            return ctx.reply(t(lang, 'RENT_REQUEST_SUBMITTED'));
+        } catch (err) {
+            if (err.message === 'RENT_DUPLICATE_IPN') {
+                return ctx.reply(t(lang, 'RENT_DUPLICATE_IPN'));
+            }
+            return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
+        }
+        return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
     });
 
     // SET GUARD ADDRESS SELECTION

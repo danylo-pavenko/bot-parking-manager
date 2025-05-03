@@ -22,8 +22,20 @@ export class RentRequestService {
         ipn: string;
         paymentMethod: 'CARD' | 'CASH';
     }): Promise<RentRequest> {
+        const existing = await this.repo.findOne({
+            where: {
+                spot: { id: data.spotId },
+                ipn: data.ipn,
+                status: In(['PENDING', 'APPROVED']),
+            },
+        });
+
+        if (existing) {
+            throw new Error('RENT_DUPLICATE_IPN');
+        }
+
         const now = new Date();
-        const endDate = addDays(now, 30); // default 30 days
+        const endDate = addDays(now, 30);
 
         const request = this.repo.create({
             renter: { id: data.renterId },
@@ -37,14 +49,8 @@ export class RentRequestService {
             endDate,
         });
 
-        const saved = await this.repo.save(request);
-
-        return this.repo.findOne({
-            where: { id: saved.id },
-            relations: ['renter', 'spot', 'spot.address'],
-        }) as Promise<RentRequest>;
+        return this.repo.save(request);
     }
-
 
     async findBySpotId(spotId: number): Promise<RentRequest[]> {
         return this.repo.find({
