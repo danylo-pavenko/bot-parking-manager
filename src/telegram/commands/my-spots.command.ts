@@ -60,6 +60,47 @@ export function setupMySpotsCommand(
         }
     });
 
+    bot.callbackQuery(/^edit_price_(\d+)$/, async (ctx) => {
+        const spotId = Number(ctx.match[1]);
+        ctx.session.temp.spotId = spotId;
+        ctx.session.step = 'edit_spot_price';
+
+        const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
+        await ctx.answerCallbackQuery();
+        await ctx.reply(t(lang, 'ENTER_NEW_PRICE'));
+    });
+
+    bot.callbackQuery(/^delete_spot_(\d+)$/, async (ctx) => {
+        const spotId = Number(ctx.match[1]);
+        await addressService.deleteSpotById(spotId);
+
+        const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
+        await ctx.answerCallbackQuery();
+        await ctx.reply(t(lang, 'SPOT_DELETED'));
+    });
+
+    bot.callbackQuery(/^deactivate_spot_(\d+)$/, async (ctx) => {
+        const spotId = Number(ctx.match[1]);
+        await addressService.updateSpotStatus(spotId, false); // припустимо `isActive = false`
+
+        const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
+        await ctx.answerCallbackQuery();
+        await ctx.reply(t(lang, 'SPOT_DEACTIVATED'));
+    });
+
+    bot.callbackQuery(/^reserve_spot_(\d+)$/, async (ctx) => {
+        const spotId = Number(ctx.match[1]);
+        const telegramId = String(ctx.from.id);
+        const user = await userService.findByTelegramId(telegramId);
+
+        if (!user) return;
+        await addressService.reserveSpotForOwner(spotId, user.id);
+
+        const lang = user?.language || 'uk';
+        await ctx.answerCallbackQuery();
+        await ctx.reply(t(lang, 'SPOT_RESERVED'));
+    });
+
     bot.callbackQuery(/^clear_renter_(\d+)$/, async (ctx) => {
         const spotId = Number(ctx.match[1]);
         const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';

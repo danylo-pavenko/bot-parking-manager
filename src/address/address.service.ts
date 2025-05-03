@@ -159,9 +159,9 @@ export class AddressService {
 
         if (!spot) return null;
 
-        spot.renter = undefined;
-        spot.carPlate = undefined;
-        
+        spot.renter = null;
+        spot.carPlate = null;
+
         await this.spotRepo.save(spot);
 
         return spot;
