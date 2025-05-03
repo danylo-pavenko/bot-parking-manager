@@ -1,4 +1,4 @@
-type Lang = 'uk' | 'en';
+import { Lang } from "./types";
 
 export const messages: Record<Lang, Record<string, string>> = {
     uk: {
@@ -93,6 +93,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         SPOT_NOT_ACTIVE: '❌ Це паркомісце наразі не активне.',
         SPOT_ALREADY_RENTED: '❌ Це паркомісце вже орендовано іншою особою.',
         SPOT_INACTIVE: '⛔️ Це паркомісце наразі деактивоване.',
+        ACTIVATE_SPOT: '🔓 Активувати',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -186,6 +187,7 @@ export const messages: Record<Lang, Record<string, string>> = {
         SPOT_NOT_ACTIVE: '❌ This parking spot is currently inactive.',
         SPOT_ALREADY_RENTED: '❌ This parking spot is already rented by someone else.',
         SPOT_INACTIVE: '⛔️ This spot is currently deactivated.',
+        ACTIVATE_SPOT: '🔓 Activate',
     },
 };
 

@@ -72,20 +72,6 @@ export class AddressService {
         });
     }
 
-    async searchAvailableSpotsByStreet(query: string): Promise<ParkingSpot[]> {
-        return this.spotRepo.find({
-            where: {
-                address: {
-                    name: ILike(`%${query}%`),
-                },
-                renter: IsNull(),
-                isActive: true,
-            },
-            relations: ['address'],
-            take: 10,
-        });
-    }
-
     async findAvailableSpots(): Promise<ParkingSpot[]> {
         return this.spotRepo.find({
             where: {
@@ -169,5 +155,18 @@ export class AddressService {
         await this.spotRepo.save(spot);
 
         return spot;
+    }
+
+    async searchAvailableSpots(query: string): Promise<ParkingSpot[]> {
+        return this.spotRepo
+            .createQueryBuilder('spot')
+            .leftJoinAndSelect('spot.address', 'address')
+            .where('spot.isActive = true')
+            .andWhere('spot.renterId IS NULL')
+            .andWhere(
+                `(LOWER(address.name) LIKE :q OR LOWER(spot.spotNumber) LIKE :q OR LOWER(spot.carPlate) LIKE :q)`,
+                { q: `%${query.toLowerCase()}%` }
+            )
+            .getMany();
     }
 }

@@ -3,3 +3,5 @@ import { Bot, Context } from "grammy";
 import { SessionData } from "./session";
 
 export type BotContext = Bot<Context & HydrateFlavor<Context> & { session: SessionData }>;
+
+export type Lang = 'uk' | 'en';

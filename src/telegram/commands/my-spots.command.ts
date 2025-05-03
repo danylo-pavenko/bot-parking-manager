@@ -1,4 +1,4 @@
-import { BotContext } from '../types';
+import { BotContext, Lang } from '../types';
 import { t } from '../bot_messages';
 import { AddressService } from 'src/address/address.service';
 import { UserService } from 'src/user/user.service';
@@ -10,6 +10,7 @@ export function setupMySpotsCommand(
     addressService: AddressService,
 ) {
     const bot = telegramService.bot;
+
     bot.command('my_spots', async (ctx) => {
         const telegramId = String(ctx.from?.id);
         const user = await userService.findByTelegramId(telegramId);
@@ -35,26 +36,13 @@ export function setupMySpotsCommand(
                         ? t(lang, 'RENTED_BY', { name: renterName })
                         : t(lang, 'NOT_RENTED');
 
-                const buttons: any[] = [
-                    [
-                        { text: t(lang, 'EDIT_PRICE'), callback_data: `edit_price_${spot.id}` },
-                        { text: t(lang, 'DELETE_SPOT'), callback_data: `delete_spot_${spot.id}` },
-                    ],
-                    [
-                        { text: t(lang, 'DEACTIVATE_SPOT'), callback_data: `deactivate_spot_${spot.id}` },
-                        { text: t(lang, 'RESERVE_FOR_ME'), callback_data: `reserve_spot_${spot.id}` },
-                    ],
-                ];
-
-                if (spot.renter) {
-                    buttons.push([
-                        { text: t(lang, 'CLEAR_RENTER'), callback_data: `clear_renter_${spot.id}` },
-                    ]);
-                }
-
                 await ctx.reply(
                     `${address.name} — №${spot.spotNumber}\n💸 ${spot.price} ${spot.currency}\n${status}`,
-                    { reply_markup: { inline_keyboard: buttons } }
+                    {
+                        reply_markup: {
+                            inline_keyboard: getSpotButtons(spot, lang),
+                        },
+                    }
                 );
             }
         }
@@ -81,11 +69,28 @@ export function setupMySpotsCommand(
 
     bot.callbackQuery(/^deactivate_spot_(\d+)$/, async (ctx) => {
         const spotId = Number(ctx.match[1]);
-        await addressService.updateSpotStatus(spotId, false); // припустимо `isActive = false`
+        await addressService.updateSpotStatus(spotId, false);
 
         const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
         await ctx.answerCallbackQuery();
-        await ctx.reply(t(lang, 'SPOT_DEACTIVATED'));
+        await ctx.editMessageReplyMarkup({
+            reply_markup: {
+                inline_keyboard: getSpotButtons({ ...ctx.session.temp, id: spotId, isActive: false }, lang),
+            },
+        });
+    });
+
+    bot.callbackQuery(/^activate_spot_(\d+)$/, async (ctx) => {
+        const spotId = Number(ctx.match[1]);
+        await addressService.updateSpotStatus(spotId, true);
+
+        const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
+        await ctx.answerCallbackQuery();
+        await ctx.editMessageReplyMarkup({
+            reply_markup: {
+                inline_keyboard: getSpotButtons({ ...ctx.session.temp, id: spotId, isActive: true }, lang),
+            },
+        });
     });
 
     bot.callbackQuery(/^reserve_spot_(\d+)$/, async (ctx) => {
@@ -116,4 +121,30 @@ export function setupMySpotsCommand(
         await ctx.answerCallbackQuery();
         await ctx.reply(t(lang, 'RENTER_REMOVED'));
     });
+}
+
+
+function getSpotButtons(spot: any, lang: Lang): any[][] {
+    const toggleButton = spot.isActive
+        ? { text: t(lang, 'DEACTIVATE_SPOT'), callback_data: `deactivate_spot_${spot.id}` }
+        : { text: t(lang, 'ACTIVATE_SPOT'), callback_data: `activate_spot_${spot.id}` };
+
+    const buttons: any[][] = [
+        [
+            { text: t(lang, 'EDIT_PRICE'), callback_data: `edit_price_${spot.id}` },
+            { text: t(lang, 'DELETE_SPOT'), callback_data: `delete_spot_${spot.id}` },
+        ],
+        [
+            toggleButton,
+            { text: t(lang, 'RESERVE_FOR_ME'), callback_data: `reserve_spot_${spot.id}` },
+        ],
+    ];
+
+    if (spot.renter) {
+        buttons.push([
+            { text: t(lang, 'CLEAR_RENTER'), callback_data: `clear_renter_${spot.id}` },
+        ]);
+    }
+
+    return buttons;
 }

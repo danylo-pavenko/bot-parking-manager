@@ -92,18 +92,17 @@ export function registerTextHandler(
                 const user = await services.userService.findByTelegramId(telegramId);
                 const lang = user?.language || 'uk';
 
-                const spots = await services.addressService.searchAvailableSpotsByStreet(query);
                 ctx.session.step = undefined;
 
-                const filteredSpots = spots.filter((s) => s.isActive && !s.renter);
+                const spots = await services.addressService.searchAvailableSpots(query);
 
-                if (!filteredSpots.length) {
+                if (!spots.length) {
                     return ctx.reply(t(lang, 'SEARCH_NOT_FOUND'));
                 }
 
-                for (const spot of filteredSpots) {
+                for (const spot of spots) {
                     await ctx.reply(
-                        `${spot.address.name} — ${spot.spotNumber}, ${spot.price} ${spot.currency}`,
+                        `${spot.address.name} — №${spot.spotNumber}\n💸 ${spot.price} ${spot.currency}`,
                         {
                             reply_markup: {
                                 inline_keyboard: [
@@ -115,7 +114,7 @@ export function registerTextHandler(
                                     ],
                                 ],
                             },
-                        },
+                        }
                     );
                 }
                 return;
