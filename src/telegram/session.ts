@@ -6,6 +6,7 @@ export interface SessionData {
     price?: number;
     guardId?: number;
     spotId?: number;
+    messageId?: number;
     fullName?: string;
     phone?: string;
     ipn?: string;

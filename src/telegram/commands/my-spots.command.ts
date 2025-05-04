@@ -51,6 +51,7 @@ export function setupMySpotsCommand(
     bot.callbackQuery(/^edit_price_(\d+)$/, async (ctx) => {
         const spotId = Number(ctx.match[1]);
         ctx.session.temp.spotId = spotId;
+        ctx.session.temp.messageId = ctx.callbackQuery.message?.message_id;
         ctx.session.step = 'edit_spot_price';
 
         const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
@@ -64,8 +65,14 @@ export function setupMySpotsCommand(
 
         const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
         await ctx.answerCallbackQuery();
-        await ctx.reply(t(lang, 'SPOT_DELETED'));
+
+        const deletedText = `🗑️ ${t(lang, 'SPOT_DELETED')}`;
+
+        if (ctx.callbackQuery.message?.message_id) {
+            await ctx.editMessageText(deletedText);
+        }
     });
+
 
     bot.callbackQuery(/^deactivate_spot_(\d+)$/, async (ctx) => {
         const spotId = Number(ctx.match[1]);
@@ -108,7 +115,8 @@ export function setupMySpotsCommand(
 
     bot.callbackQuery(/^clear_renter_(\d+)$/, async (ctx) => {
         const spotId = Number(ctx.match[1]);
-        const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
+        const telegramId = String(ctx.from.id);
+        const lang = (await userService.findByTelegramId(telegramId))?.language || 'uk';
 
         const clearedSpot = await addressService.clearRenterFromSpot(spotId);
         if (clearedSpot?.renter?.telegramId) {
@@ -118,13 +126,22 @@ export function setupMySpotsCommand(
             );
         }
 
+        const status = t(lang, 'NOT_RENTED');
+        const text = `${clearedSpot.address.name} — №${clearedSpot.spotNumber}\n💸 ${clearedSpot.price} ${clearedSpot.currency}\n${status}`;
+
         await ctx.answerCallbackQuery();
-        await ctx.reply(t(lang, 'RENTER_REMOVED'));
+
+        if (ctx.callbackQuery.message?.message_id) {
+            await ctx.editMessageText(text, {
+                reply_markup: { inline_keyboard: getSpotButtons(clearedSpot, lang) },
+            });
+        }
     });
+
 }
 
 
-function getSpotButtons(spot: any, lang: Lang): any[][] {
+export function getSpotButtons(spot: any, lang: Lang): any[][] {
     const toggleButton = spot.isActive
         ? { text: t(lang, 'DEACTIVATE_SPOT'), callback_data: `deactivate_spot_${spot.id}` }
         : { text: t(lang, 'ACTIVATE_SPOT'), callback_data: `activate_spot_${spot.id}` };

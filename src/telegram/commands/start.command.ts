@@ -54,7 +54,7 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
     });
 
     bot.callbackQuery('search_now', async (ctx) => {
-        const lang = (await this.userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
+        const lang = (await userService.findByTelegramId(String(ctx.from.id)))?.language || 'uk';
         ctx.session.step = 'search_input';
         await ctx.answerCallbackQuery();
         await ctx.reply(t(lang, 'SEARCH_ENTER_STREET'));

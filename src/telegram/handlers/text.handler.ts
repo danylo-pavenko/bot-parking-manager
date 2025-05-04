@@ -5,6 +5,7 @@ import { AddressService } from 'src/address/address.service';
 import { RentRequestService } from 'src/request/rent-request.service';
 import { UserRole } from 'src/entities/user.entity';
 import { TelegramService } from '../telegram.service';
+import { getSpotButtons } from '../commands/my-spots.command';
 
 export function registerTextHandler(
     telegramService: TelegramService,
@@ -179,6 +180,43 @@ export function registerTextHandler(
 
                 await services.userService.updateRole(targetUser.telegramId, UserRole.ADMIN);
                 return ctx.reply(t(lang, 'ADMIN_GRANTED'));
+            }
+
+            case 'edit_spot_price': {
+                const price = parseFloat(ctx.message.text.trim());
+                const telegramId = String(ctx.from.id);
+                const user = await this.userService.findByTelegramId(telegramId);
+                const lang = user?.language || 'uk';
+
+                if (isNaN(price)) {
+                    return ctx.reply(t(lang, 'INVALID_PRICE'));
+                }
+
+                const spotId = ctx.session.temp.spotId;
+                await this.addressService.updateSpotPrice(spotId, price);
+
+                const updatedSpot = await this.addressService.findSpotById(spotId);
+                if (!updatedSpot) return;
+
+                const isReservedByOwner = updatedSpot.renter?.id === user?.id;
+                const renterName = updatedSpot.renter?.fullName ?? '-';
+                const status = isReservedByOwner
+                    ? t(lang, 'RESERVED_BY_YOU')
+                    : updatedSpot.renter
+                        ? t(lang, 'RENTED_BY', { name: renterName })
+                        : t(lang, 'NOT_RENTED');
+
+                const text = `${updatedSpot.address.name} — №${updatedSpot.spotNumber}\n💸 ${updatedSpot.price} ${updatedSpot.currency}\n${status}`;
+
+                await ctx.api.editMessageText(
+                    ctx.chat.id,
+                    ctx.session.temp.messageId,
+                    text,
+                    { reply_markup: { inline_keyboard: getSpotButtons(updatedSpot, lang) } }
+                );
+
+                ctx.session.step = undefined;
+                ctx.session.temp = {};
             }
 
             default:
