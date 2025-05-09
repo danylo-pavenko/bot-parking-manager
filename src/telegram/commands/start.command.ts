@@ -3,7 +3,7 @@ import { BotContext } from '../types';
 import { t } from '../bot_messages';
 import { UserRole } from 'src/entities/user.entity';
 import { getGuardMenu, getOwnerMenu, getRenterMenu } from '../menus/main-menu';
-import { InlineKeyboard } from 'grammy';
+import { Context, InlineKeyboard } from 'grammy';
 
 export function setupStartCommand(bot: BotContext, userService: UserService) {
     bot.command('start', async (ctx) => {
@@ -34,6 +34,8 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
             return ctx.reply(info.join('\n'), {
                 reply_markup: keyboard,
             });
+        } else {
+            await printLegalEntity(ctx);
         }
 
         // Якщо користувач новий або не завершив реєстрацію
@@ -60,25 +62,25 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
 
         const telegramId = String(ctx.from.id);
         const user = await userService.findByTelegramId(telegramId);
-        
+
         const lang = user.language;
-        
+
         let menu: InlineKeyboard;
         switch (user.role) {
-          case 'OWNER':
-            menu = getOwnerMenu(lang);
-            break;
-          case 'RENTER':
-            menu = getRenterMenu(lang);
-            break;
-          case 'GUARD':
-            menu = getGuardMenu(lang);
-            break;
-          default:
-            return;
+            case 'OWNER':
+                menu = getOwnerMenu(lang);
+                break;
+            case 'RENTER':
+                menu = getRenterMenu(lang);
+                break;
+            case 'GUARD':
+                menu = getGuardMenu(lang);
+                break;
+            default:
+                return;
         }
         await ctx.reply(t(lang, 'MAIN_MENU_CHOOSE_ACTION'), { reply_markup: menu });
-      });
+    });
 
     bot.callbackQuery(/^role_(OWNER|RENTER|GUARD)$/, async (ctx) => {
         const role = ctx.match[1] as UserRole;
@@ -108,5 +110,32 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
         ctx.session.step = 'search_input';
         await ctx.answerCallbackQuery();
         await ctx.reply(t(lang, 'SEARCH_ENTER_STREET'));
+    });
+}
+
+async function printLegalEntity(ctx: Context) {
+    const legalInfo = `
+    <b>Інформація про розробника</b>
+    
+    <b>ФОП:</b> Павенко Данило Євгенійович
+    <b>ІПН:</b> 3484203653
+    <b>Телефон:</b> +380958959421
+    <b>Email:</b> daniil.pavenko@gmail.com
+    
+    <b>Політика конфіденційності:</b>
+    <a href="https://docs.google.com/document/d/1BoWeZkmDKh8jUVPhg4Pos5bfDkcnYhLQVmBCt01Znco/edit?usp=sharing">Документ політики</a>
+    
+    <b>Договір оферти:</b>
+    <a href="https://docs.google.com/document/d/1cnbMlBFCDMIm-kooAPJnnb6pwYWRbXOauyhrASyDlrw/edit?usp=sharing">Документ оферти</a>
+    
+    <b>Умови:</b>
+    • повернення коштів
+    • скасування замовлень
+    • умови доставки
+    • використання сервісу
+    `.trim();
+
+    await ctx.reply(legalInfo, {
+        parse_mode: 'HTML',
     });
 }
