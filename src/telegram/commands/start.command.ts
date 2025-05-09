@@ -5,13 +5,26 @@ import { UserRole } from 'src/entities/user.entity';
 
 export function setupStartCommand(bot: BotContext, userService: UserService) {
     bot.command('start', async (ctx) => {
-        if (!ctx.from) {
-            return;
-        }
+        if (!ctx.from) return;
+
         const telegramId = String(ctx.from.id);
         const username = ctx.from.username;
 
         let user = await userService.findByTelegramId(telegramId);
+
+        // Якщо користувач вже зареєстрований
+        if (user?.language && user?.role) {
+            const lang = user.language;
+            const roleName = t(lang, `ROLE_${user.role}`);
+            const info = [
+                `👤 ${user.fullName || '—'}`,
+                `🧑 Username: @${user.username || '—'}`,
+                `🎭 ${t(lang, 'YOUR_ROLE')}: ${roleName}`,
+            ];
+            return ctx.reply(info.join('\n'));
+        }
+
+        // Якщо користувач новий або не завершив реєстрацію
         if (!user) {
             user = await userService.create({ telegramId, username });
         }
@@ -35,7 +48,7 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
         const telegramId = String(ctx.from.id);
         await userService.updateRole(telegramId, role);
         ctx.session.step = undefined;
-        
+
         const user = await userService.findByTelegramId(telegramId);
         const lang = user?.language || 'uk';
 
