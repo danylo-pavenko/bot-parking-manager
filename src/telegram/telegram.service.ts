@@ -11,11 +11,13 @@ import { registerCommands } from './commands';
 import { registerTextHandler } from './handlers/text.handler';
 import { RentRequest } from 'src/entities/rent-request.entity';
 import { t } from './bot_messages';
+import { BotContext } from './types';
+import { registerMainMenuHandlers } from './menus/main-menu.handlers';
 
 @Injectable()
 export class TelegramService implements OnModuleDestroy {
 
-    public readonly bot: Bot<Context & HydrateFlavor<Context> & { session: SessionData }>;
+    public readonly bot: BotContext;
 
     constructor(
         private config: ConfigService,
@@ -38,6 +40,8 @@ export class TelegramService implements OnModuleDestroy {
             addressService: this.addressService,
             rentRequestService: this.rentRequestService,
         });
+
+        registerMainMenuHandlers(this.bot);
     }
 
     async launch() {

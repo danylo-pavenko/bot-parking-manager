@@ -2,6 +2,8 @@ import { UserService } from 'src/user/user.service';
 import { BotContext } from '../types';
 import { t } from '../bot_messages';
 import { UserRole } from 'src/entities/user.entity';
+import { getGuardMenu, getOwnerMenu, getRenterMenu } from '../menus/main-menu';
+import { InlineKeyboard } from 'grammy';
 
 export function setupStartCommand(bot: BotContext, userService: UserService) {
     bot.command('start', async (ctx) => {
@@ -15,13 +17,23 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
         // Якщо користувач вже зареєстрований
         if (user?.language && user?.role) {
             const lang = user.language;
-            const roleName = t(lang, `ROLE_${user.role}`);
+            const role = user.role;
+
+            const roleName = t(lang, `ROLE_${role}`);
             const info = [
                 `👤 ${user.fullName || '—'}`,
                 `🧑 Username: @${user.username || '—'}`,
                 `🎭 ${t(lang, 'YOUR_ROLE')}: ${roleName}`,
             ];
-            return ctx.reply(info.join('\n'));
+
+            const keyboard =
+                role === 'OWNER' ? getOwnerMenu(lang) :
+                    role === 'RENTER' ? getRenterMenu(lang) :
+                        getGuardMenu(lang);
+
+            return ctx.reply(info.join('\n'), {
+                reply_markup: keyboard,
+            });
         }
 
         // Якщо користувач новий або не завершив реєстрацію
@@ -42,6 +54,31 @@ export function setupStartCommand(bot: BotContext, userService: UserService) {
             },
         });
     });
+
+    bot.command('menu', async (ctx) => {
+        if (!ctx.from) return;
+
+        const telegramId = String(ctx.from.id);
+        const user = await userService.findByTelegramId(telegramId);
+        
+        const lang = user.language;
+        
+        let menu: InlineKeyboard;
+        switch (user.role) {
+          case 'OWNER':
+            menu = getOwnerMenu(lang);
+            break;
+          case 'RENTER':
+            menu = getRenterMenu(lang);
+            break;
+          case 'GUARD':
+            menu = getGuardMenu(lang);
+            break;
+          default:
+            return;
+        }
+        await ctx.reply(t(lang, 'MAIN_MENU_CHOOSE_ACTION'), { reply_markup: menu });
+      });
 
     bot.callbackQuery(/^role_(OWNER|RENTER|GUARD)$/, async (ctx) => {
         const role = ctx.match[1] as UserRole;
