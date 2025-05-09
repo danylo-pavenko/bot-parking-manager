@@ -28,4 +28,8 @@ export class ConfigService {
     get dbName(): string {
         return process.env.DB_NAME!;
     }
+
+    get paymentProviderToken(): string {
+        return process.env.TELEGRAM_PROVIDER_TOKEN!;
+    }
 }

@@ -112,6 +112,9 @@ export const messages: Record<Lang, Record<string, string>> = {
         MENU_BTN_RENT: '📥 Орендувати',
         MENU_BTN_CANCEL_RENT: '❌ Скасувати оренду',
         MENU_BTN_CONFIRM_CASH: '💵 Підтвердити готівкову оплату',
+        OWNER_NO_PAYMENT: '❌ Власник ще не підключив оплату через Portmone.',
+        PAYMENT_DESCRIPTION: 'Оплата за оренду паркомісця через Telegram.',
+        RENT_PAYMENT_LABEL: 'Оренда паркомісця',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -224,6 +227,9 @@ export const messages: Record<Lang, Record<string, string>> = {
         MENU_BTN_RENT: '📥 Rent spot',
         MENU_BTN_CANCEL_RENT: '❌ Cancel rent',
         MENU_BTN_CONFIRM_CASH: '💵 Confirm cash payment',
+        OWNER_NO_PAYMENT: '❌ The owner has not connected Portmone payment yet.',
+        PAYMENT_DESCRIPTION: 'Parking spot rental payment via Telegram.',
+        RENT_PAYMENT_LABEL: 'Parking spot rental',
     },
 };
 

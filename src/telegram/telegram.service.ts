@@ -32,6 +32,7 @@ export class TelegramService implements OnModuleDestroy {
             userService: this.userService,
             addressService: this.addressService,
             rentRequestService: this.rentRequestService,
+            configService: config,
         };
 
         registerCommands(this, appServices);

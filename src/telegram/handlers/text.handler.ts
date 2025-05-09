@@ -130,18 +130,51 @@ export function registerTextHandler(
 
             case 'rent_input_ipn': {
                 ctx.session.temp.ipn = ctx.message.text.trim();
-                ctx.session.step = 'rent_input_payment_method';
+                ctx.session.step = undefined;
 
-                return ctx.reply(t(lang, 'RENT_ENTER_PAYMENT'), {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                { text: t(lang, 'PAYMENT_METHOD_CASH'), callback_data: 'payment_CASH' },
-                                { text: t(lang, 'PAYMENT_METHOD_CARD'), callback_data: 'payment_CARD' },
-                            ],
-                        ],
-                    },
+                const spotId = ctx.session.temp.spotId;
+                if (!spotId) {
+                    return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
+                }
+
+                const spot = await services.addressService.findSpotById(spotId);
+                if (!spot || !spot.owner) {
+                    return ctx.reply(t(lang, 'SOMETHING_WENT_WRONG'));
+                }
+
+                // Перевіряємо, чи власник має Portmone договори
+                if (!spot.owner.portmoneMerchantId || !spot.owner.portmoneSecretKey) {
+                    return ctx.reply(t(lang, 'OWNER_NO_PAYMENT'));
+                }
+
+                // Зберігаємо дані заявки в базу (PENDING), без підтвердження
+                const request = await services.rentRequestService.create({
+                    renterId: user!.id,
+                    spotId: spot.id,
+                    fullName: ctx.session.temp.fullName,
+                    phone: ctx.session.temp.phone,
+                    ipn: ctx.session.temp.ipn,
+                    paymentMethod: 'CARD',
                 });
+
+                // Надсилаємо invoice через Telegram
+                const price = Math.round(spot.price * 100); // у копійках
+                await ctx.replyWithInvoice(
+                    `${spot.address.name}, №${spot.spotNumber}`,
+                    t(lang, 'PAYMENT_DESCRIPTION'),
+                    `rent-${request.id}`,
+                    spot.currency,
+                    [{ label: t(lang, 'RENT_PAYMENT_LABEL'), amount: price }],
+                    {
+                        provider_token: services.configService.paymentProviderToken,
+                        start_parameter: `rent-${request.id}`,
+                        need_name: false,
+                        need_email: true,
+                        send_email_to_provider: true,
+                    }
+                );
+
+                return;
             }
 
             // === CHECK CAR PLATE (GUARD) ===

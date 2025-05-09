@@ -31,6 +31,12 @@ export class User {
     @Column({ nullable: true })
     phone?: string;
 
+    @Column({ nullable: true })
+    portmoneMerchantId?: string;
+
+    @Column({ nullable: true })
+    portmoneSecretKey?: string;
+
     @Column({ type: 'enum', enum: UserRole, nullable: true })
     role?: UserRole;
 
