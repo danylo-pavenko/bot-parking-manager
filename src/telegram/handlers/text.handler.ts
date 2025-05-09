@@ -1,19 +1,12 @@
-import { BotContext } from '../types';
+import { AppServices } from '../types';
 import { t } from '../bot_messages';
-import { UserService } from 'src/user/user.service';
-import { AddressService } from 'src/address/address.service';
-import { RentRequestService } from 'src/request/rent-request.service';
 import { UserRole } from 'src/entities/user.entity';
 import { TelegramService } from '../telegram.service';
 import { getSpotButtons } from '../commands/my-spots.command';
 
 export function registerTextHandler(
     telegramService: TelegramService,
-    services: {
-        userService: UserService;
-        addressService: AddressService;
-        rentRequestService: RentRequestService;
-    }
+    services: AppServices,
 ) {
     const bot = telegramService.bot;
     bot.on('message:text', async (ctx) => {
@@ -220,6 +213,7 @@ export function registerTextHandler(
             }
 
             default:
+                console.log('Not defined command', ctx.message.text);
                 await ctx.reply(t(lang, 'MISSUNDERSTANDING_COMMAND'));
         }
     });

@@ -3,6 +3,8 @@ import { t } from '../bot_messages';
 import { UserService } from 'src/user/user.service';
 import { RentRequestService } from 'src/request/rent-request.service';
 import { TelegramService } from '../telegram.service';
+import { Context } from 'grammy';
+import { SessionData } from '../session';
 
 export function setupConfirmCashCommand(
     telegramService: TelegramService,
@@ -10,36 +12,7 @@ export function setupConfirmCashCommand(
     rentRequestService: RentRequestService
 ) {
     const bot = telegramService.bot;
-    bot.command('confirm_cash', async (ctx) => {
-        if (!ctx.from) return;
-
-        const telegramId = String(ctx.from.id);
-        const user = await userService.findByTelegramId(telegramId);
-        const lang = user?.language || 'uk';
-
-        if (user?.role !== 'OWNER') {
-            return ctx.reply(t(lang, 'ONLY_OWNER'));
-        }
-
-        const requests = await rentRequestService.findPendingByOwner(user.id);
-        if (!requests.length) {
-            return ctx.reply(t(lang, 'NO_PENDING_REQUESTS'));
-        }
-
-        ctx.session.step = 'confirm_cash_select_request';
-        ctx.session.temp = {};
-
-        await ctx.reply(t(lang, 'SELECT_REQUEST_TO_CONFIRM'), {
-            reply_markup: {
-                inline_keyboard: requests.map((r) => [
-                    {
-                        text: `${r.spot.address.name} — ${r.spot.spotNumber} (${r.renter.fullName})`,
-                        callback_data: `confirm_request_${r.id}`,
-                    },
-                ]),
-            },
-        });
-    });
+    bot.command('confirm_cash', async (ctx) => handleConfirmCash(ctx, ctx.session, userService, rentRequestService));
 
     bot.callbackQuery(/^confirm_request_(\d+)$/, async (ctx) => {
         const requestId = Number(ctx.match[1]);
@@ -69,5 +42,35 @@ export function setupConfirmCashCommand(
         await ctx.answerCallbackQuery();
         return ctx.reply(t(lang, 'RENT_CONFIRMED'));
     });
+}
 
+export async function handleConfirmCash(ctx: Context, session: SessionData, userService: UserService, rentRequestService: RentRequestService) {
+    if (!ctx.from) return;
+
+    const telegramId = String(ctx.from.id);
+    const user = await userService.findByTelegramId(telegramId);
+    const lang = user?.language || 'uk';
+
+    if (user?.role !== 'OWNER') {
+        return ctx.reply(t(lang, 'ONLY_OWNER'));
+    }
+
+    const requests = await rentRequestService.findPendingByOwner(user.id);
+    if (!requests.length) {
+        return ctx.reply(t(lang, 'NO_PENDING_REQUESTS'));
+    }
+
+    session.step = 'confirm_cash_select_request';
+    session.temp = {};
+
+    await ctx.reply(t(lang, 'SELECT_REQUEST_TO_CONFIRM'), {
+        reply_markup: {
+            inline_keyboard: requests.map((r) => [
+                {
+                    text: `${r.spot.address.name} — ${r.spot.spotNumber} (${r.renter.fullName})`,
+                    callback_data: `confirm_request_${r.id}`,
+                },
+            ]),
+        },
+    });
 }

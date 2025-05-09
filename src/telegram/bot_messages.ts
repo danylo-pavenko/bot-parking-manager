@@ -106,6 +106,12 @@ export const messages: Record<Lang, Record<string, string>> = {
         MENU_BTN_CHECK_CAR: '🔎 Перевірити авто',
         MENU_BTN_PROFILE: '⚙️ Мій профіль',
         MENU_BTN_LANGUAGE: '🌐 Мова',
+        PARTNER_INFO: '📄 Щоб стати офіційним партнером, вам потрібно звʼязатись із менеджером продажів.',
+        PARTNER_NEXT_STEPS: 'Ви отримаєте інструкції щодо підписання договору та підключення рахунку ФОП.',
+        MENU_BTN_PARTNER: '🤝 Партнерство',
+        MENU_BTN_RENT: '📥 Орендувати',
+        MENU_BTN_CANCEL_RENT: '❌ Скасувати оренду',
+        MENU_BTN_CONFIRM_CASH: '💵 Підтвердити готівкову оплату',
     },
     en: {
         WELCOME: 'Welcome!',
@@ -212,6 +218,12 @@ export const messages: Record<Lang, Record<string, string>> = {
         MENU_BTN_CHECK_CAR: '🔎 Check car',
         MENU_BTN_PROFILE: '⚙️ My profile',
         MENU_BTN_LANGUAGE: '🌐 Language',
+        PARTNER_INFO: '📄 To become an official partner, please contact our sales manager.',
+        PARTNER_NEXT_STEPS: 'You will receive instructions for signing a contract and connecting your business account.',
+        MENU_BTN_PARTNER: '🤝 Partnership',
+        MENU_BTN_RENT: '📥 Rent spot',
+        MENU_BTN_CANCEL_RENT: '❌ Cancel rent',
+        MENU_BTN_CONFIRM_CASH: '💵 Confirm cash payment',
     },
 };
 

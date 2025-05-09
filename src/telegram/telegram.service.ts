@@ -11,7 +11,7 @@ import { registerCommands } from './commands';
 import { registerTextHandler } from './handlers/text.handler';
 import { RentRequest } from 'src/entities/rent-request.entity';
 import { t } from './bot_messages';
-import { BotContext } from './types';
+import { AppServices, BotContext } from './types';
 import { registerMainMenuHandlers } from './menus/main-menu.handlers';
 
 @Injectable()
@@ -28,25 +28,22 @@ export class TelegramService implements OnModuleDestroy {
         this.bot = new Bot(this.config.botToken);
         this.bot.use(session({ initial: (): SessionData => ({ temp: {} }) }));
         this.bot.use(hydrate());
-
-        registerCommands(this, {
+        const appServices: AppServices = {
             userService: this.userService,
             addressService: this.addressService,
             rentRequestService: this.rentRequestService,
-        });
+        };
 
-        registerTextHandler(this, {
-            userService: this.userService,
-            addressService: this.addressService,
-            rentRequestService: this.rentRequestService,
-        });
+        registerCommands(this, appServices);
 
-        registerMainMenuHandlers(this.bot);
+        registerTextHandler(this, appServices);
+
+        registerMainMenuHandlers(this.bot, appServices);
     }
 
     async launch() {
+        console.log('Bot starting');
         await this.bot.start();
-        console.log('Bot started');
     }
 
     async onModuleDestroy() {

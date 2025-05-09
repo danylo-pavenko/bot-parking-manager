@@ -3,6 +3,8 @@ import { t } from '../bot_messages';
 import { AddressService } from 'src/address/address.service';
 import { UserService } from 'src/user/user.service';
 import { TelegramService } from 'src/telegram/telegram.service';
+import { Context } from 'grammy';
+import { SessionData } from '../session';
 
 export function setupMySpotsCommand(
     telegramService: TelegramService,
@@ -11,42 +13,7 @@ export function setupMySpotsCommand(
 ) {
     const bot = telegramService.bot;
 
-    bot.command('my_spots', async (ctx) => {
-        const telegramId = String(ctx.from?.id);
-        const user = await userService.findByTelegramId(telegramId);
-        const lang = user?.language || 'uk';
-        if (user?.role !== 'OWNER') {
-            return ctx.reply(t(lang, 'ONLY_OWNER'));
-        }
-
-        const addresses = await addressService.findAllByOwnerWithSpots(user.id);
-
-        if (!addresses.length) {
-            return ctx.reply(t(lang, 'NO_SPOTS_AVAILABLE'));
-        }
-
-        for (const address of addresses) {
-            for (const spot of address.spots) {
-                const isReservedByOwner = spot.renter?.id === user.id;
-                const renterName = spot.renter?.fullName ?? '-';
-
-                const status = isReservedByOwner
-                    ? t(lang, 'RESERVED_BY_YOU')
-                    : spot.renter
-                        ? t(lang, 'RENTED_BY', { name: renterName })
-                        : t(lang, 'NOT_RENTED');
-
-                await ctx.reply(
-                    `${address.name} — №${spot.spotNumber}\n💸 ${spot.price} ${spot.currency}\n${status}`,
-                    {
-                        reply_markup: {
-                            inline_keyboard: getSpotButtons(spot, lang),
-                        },
-                    }
-                );
-            }
-        }
-    });
+    bot.command('my_spots', async (ctx) => handleMySpots(ctx, userService, addressService));
 
     bot.callbackQuery(/^edit_price_(\d+)$/, async (ctx) => {
         const spotId = Number(ctx.match[1]);
@@ -164,4 +131,42 @@ export function getSpotButtons(spot: any, lang: Lang): any[][] {
     }
 
     return buttons;
+}
+
+export async function handleMySpots(ctx: Context, userService: UserService, addressService: AddressService) {
+    if (!ctx.from) return;
+    const telegramId = String(ctx.from.id);
+    const user = await userService.findByTelegramId(telegramId);
+    const lang = user?.language || 'uk';
+    if (user?.role !== 'OWNER') {
+        return ctx.reply(t(lang, 'ONLY_OWNER'));
+    }
+
+    const addresses = await addressService.findAllByOwnerWithSpots(user.id);
+
+    if (!addresses.length) {
+        return ctx.reply(t(lang, 'NO_SPOTS_AVAILABLE'));
+    }
+
+    for (const address of addresses) {
+        for (const spot of address.spots) {
+            const isReservedByOwner = spot.renter?.id === user.id;
+            const renterName = spot.renter?.fullName ?? '-';
+
+            const status = isReservedByOwner
+                ? t(lang, 'RESERVED_BY_YOU')
+                : spot.renter
+                    ? t(lang, 'RENTED_BY', { name: renterName })
+                    : t(lang, 'NOT_RENTED');
+
+            await ctx.reply(
+                `${address.name} — №${spot.spotNumber}\n💸 ${spot.price} ${spot.currency}\n${status}`,
+                {
+                    reply_markup: {
+                        inline_keyboard: getSpotButtons(spot, lang),
+                    },
+                }
+            );
+        }
+    }
 }
